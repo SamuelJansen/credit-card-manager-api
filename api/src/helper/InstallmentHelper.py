@@ -20,7 +20,7 @@ class InstallmentHelper:
                 date=DateTimeHelper.dateOf(dateTime=DateTimeHelper.plusMonths(nextPurchaseDateTime, months=nthInstallment)),
                 time=DateTimeHelper.timeOf(dateTime=nextPurchaseDateTime)
             )
-        currentPurchaseDateTime = DateTimeHelper.of(dateTIme=responseDto.purchaseAt)
+        currentPurchaseDateTime = DateTimeHelper.of(dateTime=responseDto.purchaseAt)
         return DateTimeHelper.of(
             date=DateTimeHelper.dateOf(dateTime=DateTimeHelper.plusMonths(currentPurchaseDateTime, months=nthInstallment)),
             time=DateTimeHelper.timeOf(dateTime=currentPurchaseDateTime)
