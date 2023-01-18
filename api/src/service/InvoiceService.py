@@ -27,8 +27,8 @@ class InvoiceService:
                 )
             )
             toYearMonthList = f'{DateTimeHelper.dateOf(dateTime = toDateTime)}'.split('-')[:-1]
-            closeAt = f'{toYearMonthList[0]:02}-{toYearMonthList[1]:02}-{creditCardResponseDto.closingDay:02}'
-            dueAt = f'{toYearMonthList[0]:02}-{toYearMonthList[1]:02}-{creditCardResponseDto.dueDay:02}'
+            closeAt = f'{toYearMonthList[0]}-{toYearMonthList[1]}-{creditCardResponseDto.closingDay:02}'
+            dueAt = f'{toYearMonthList[0]}-{toYearMonthList[1]}-{creditCardResponseDto.dueDay:02}'
             invoiceResponseDtoList.append(
                 InvoiceDto.InvoiceResponseDto(
                     key = creditCardResponseDto.key,
