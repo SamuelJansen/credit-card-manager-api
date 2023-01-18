@@ -37,7 +37,7 @@ class FileManager:
             )
         except Exception as exception:
             log.failure(self.readContent, f'Not possible to read content. Filepath: {self.filepath}', exception=exception)
-        raise exception
+            raise exception
 
 
 @Repository(model = AuthorizationAccess.AuthorizationAccess)
