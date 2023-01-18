@@ -60,7 +60,7 @@ class PurchaseService:
     @AuthorizedServiceMethod(requestClass=[PurchaseDto.PurchaseRequestDto], operations=[AuthorizationOperation.POST])
     def create(self, dto, authorizedRequest):
         creditCardResponseDto = self.service.creditCard.findByKey(dto.creditCardKey)
-        if creditCardResponseDto.credit.customLimit - creditCardResponseDto.credit.value < dto.value:
+        if creditCardResponseDto.credit.customLimit - creditCardResponseDto.credit.value > dto.value:
             raise GlobalException(message='Not enought funds', status=HttpStatus.BAD_REQUEST)
         model = self.mapper.purchase.fromRequestDtoToModel(dto)
         self.saveAllModel([model])
