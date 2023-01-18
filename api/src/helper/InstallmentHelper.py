@@ -13,7 +13,8 @@ class InstallmentHelper:
     @HelperMethod(requestClass=[PurchaseDto.PurchaseResponseDto, CreditCardDto.CreditCardResponseDto, int])
     def getInstallmentAt(self, responseDto, creditCardResponseDto, nthInstallment):
         closingDateTime = self.getCurrentClosingDateTime(creditCardResponseDto)
-        if responseDto.purchaseAt >= closingDateTime:
+        dueDateTime = self.getCurrentDueDateTime(creditCardResponseDto)
+        if responseDto.purchaseAt >= closingDateTime and responseDto.purchaseAt <= dueDateTime:
             nextPurchaseDateTime = DateTimeHelper.of(dateTime = DateTimeHelper.plusMonths(responseDto.purchaseAt, months=1))
             return DateTimeHelper.of(
                 date=DateTimeHelper.dateOf(dateTime=DateTimeHelper.plusMonths(nextPurchaseDateTime, months=nthInstallment)),
