@@ -2,6 +2,7 @@ from python_helper import ObjectHelper, DateTimeHelper
 from python_framework import Service, ServiceMethod, Serializer, StaticConverter
 
 from constant import InvoiceConstant
+from helper.static import MathStaticHelper
 from dto import InvoiceDto, InstallmentDto, CreditCardDto
 
 
@@ -13,7 +14,7 @@ class InvoiceService:
         creditCardResponseDtoList = self.service.creditCard.findAllByQuery(CreditCardDto.CreditCardQueryAllDto(keyList=[] if ObjectHelper.isEmpty(queryDto.keyList) else queryDto.keyList))
         invoiceResponseDtoList = []
         for creditCardResponseDto in creditCardResponseDtoList:
-            closingDateTime = self.helper.installment.getCurrentClosingDateTime(creditCardResponseDto)
+            closingDateTime = self.helper.installment.getCurrentClosingDateTime(DateTimeHelper.of(date=queryDto.date), creditCardResponseDto)
             closingDate = DateTimeHelper.dateOf(dateTime=closingDateTime)
             fromDateTime = closingDateTime if queryDto.date >= closingDate else DateTimeHelper.minusMonths(closingDateTime, months=1)
             toDateTime = closingDateTime if queryDto.date < closingDate else DateTimeHelper.plusMonths(closingDateTime, months=1)
@@ -32,8 +33,16 @@ class InvoiceService:
             invoiceResponseDtoList.append(
                 InvoiceDto.InvoiceResponseDto(
                     key = creditCardResponseDto.key,
-                    value = sum([installmentResponseDto.value for installmentResponseDto in installmentResponseDtoList if installmentResponseDto.status in InvoiceConstant.INSTALLMENT_COUNTABLE_TYPES]),
-                    installmentList = installmentResponseDtoList,
+                    value = MathStaticHelper.roundIt(
+                        sum(
+                            [
+                                installmentResponseDto.value
+                                for installmentResponseDto in installmentResponseDtoList
+                                if installmentResponseDto.status in InvoiceConstant.INSTALLMENT_COUNTABLE_TYPES
+                            ]
+                        )
+                    ),
+                    installmentList = sorted(installmentResponseDtoList, key=lambda x: x.installmentAt, reverse=True), ###- ut.sort(key=lambda x: x.count, reverse=True)
                     creditCard = creditCardResponseDto,
                     closeAt = closeAt,
                     dueAt = dueAt

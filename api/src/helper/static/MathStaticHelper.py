@@ -1,5 +1,2 @@
-builtinRound = round
-
-
-def round(value):
-    return builtinRound(value, 2)
+def roundIt(value):
+    return round(value, 2)

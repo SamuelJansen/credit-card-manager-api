@@ -52,6 +52,7 @@ class InstallmentService:
             model.purchaseKey
             for model in modelList
         ])
+        ###- sorted(modelList, key=lambda x: x.installmentAt, reverse=True)
         return self.mapper.installment.toResponseDtoList(modelList, purchaseResponseDtoList)
 
 

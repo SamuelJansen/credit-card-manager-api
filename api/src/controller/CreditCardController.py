@@ -7,8 +7,8 @@ from dto import CreditCardDto
     url = '/credit-card',
     tag = 'Credit Card',
     description = 'Credit Card controller'
-    , logRequest = True
-    , logResponse = True
+    # , logRequest = True
+    # , logResponse = True
 )
 class CreditCardController:
 
@@ -24,8 +24,8 @@ class CreditCardController:
     url = '/credit-card',
     tag = 'Credit Card',
     description = 'Credit Card controller'
-    , logRequest = True
-    , logResponse = True
+    # , logRequest = True
+    # , logResponse = True
 )
 class CreditCardAllController:
 

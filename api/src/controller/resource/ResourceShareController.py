@@ -7,8 +7,8 @@ from dto import AuthorizationAccessShareDto
     url = '/resource/share',
     tag = 'Resource',
     description = 'Security controller'
-    , logRequest = True
-    , logResponse = True
+#     , logRequest = True
+#     , logResponse = True
 )
 class ResourceShareController:
 

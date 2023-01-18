@@ -18,6 +18,7 @@ DEFAULT_STATUS = InstallmentStatus.NONE
 
 DEFAULT_DUE_TIME = DateTimeHelper.DEFAULT_TIME_BEGIN
 
+DEFAULT_CLOSING_TIME = DateTimeHelper.DEFAULT_TIME_BEGIN
 
 MIN_START_DATE_TIME = DateTimeHelper.forcedlyParse('1969-01-01 00:00:01.000')
 MAX_END_DATE_TIME = DateTimeHelper.of(date=DATE_AHEAD, time=TIME_NOW) ###- DateTimeHelper.forcedlyParse('2999-12-31 23:59:59.999')

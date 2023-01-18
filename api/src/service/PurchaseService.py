@@ -65,13 +65,13 @@ class PurchaseService:
         model = self.mapper.purchase.fromRequestDtoToModel(dto)
         self.saveAllModel([model])
         responseDto = self.mapper.purchase.fromModelToResponseDto(model)
-        installmentValue = MathStaticHelper.round(responseDto.value / responseDto.installments)
+        installmentValue = MathStaticHelper.roundIt(responseDto.value / responseDto.installments)
         installmentResponseDtoList = self.service.installment.newCreatedAll(
             [
                 InstallmentDto.InstallmentRequestDto(
                     purchaseKey = responseDto.key,
                     label = f'{responseDto.label}',
-                    value = installmentValue if nthInstallment > 0 else installmentValue + MathStaticHelper.round(
+                    value = installmentValue if nthInstallment > 0 else installmentValue + MathStaticHelper.roundIt(
                         responseDto.value - installmentValue * responseDto.installments
                     ),
                     installmentAt = self.helper.installment.getInstallmentAt(responseDto, creditCardResponseDto, nthInstallment),

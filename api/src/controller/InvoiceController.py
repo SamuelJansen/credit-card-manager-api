@@ -7,8 +7,8 @@ from dto import InvoiceDto
     url = '/invoice',
     tag = 'Invoice',
     description = 'Invoice controller'
-    , logRequest = True
-    , logResponse = True
+    # , logRequest = True
+    # , logResponse = True
 )
 class InvoiceController:
 

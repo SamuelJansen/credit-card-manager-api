@@ -7,8 +7,8 @@ from dto import InstallmentDto
     url = '/installment',
     tag = 'Installment',
     description = 'Installment controller'
-    , logRequest = True
-    , logResponse = True
+    # , logRequest = True
+    # , logResponse = True
 )
 class InstallmentController:
 
@@ -40,8 +40,8 @@ class InstallmentController:
     url = '/installment',
     tag = 'Installment',
     description = 'Installment controller'
-    , logRequest = True
-    , logResponse = True
+    # , logRequest = True
+    # , logResponse = True
 )
 class InstallmentAllController:
 
