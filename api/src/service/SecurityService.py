@@ -15,6 +15,7 @@ def buildAccessMemoryKey(resourceKey, accountKey):
 class SecurityService:
 
     accesses = {}
+    transactionKey = None
 
     @ServiceMethod()
     def getAuthorizationAccount(self):
@@ -27,13 +28,12 @@ class SecurityService:
             if role in securityContextItemsAsString
         ]
         authorizationAccount.accesses = self.getAccessesByAccount(authorizationAccount)
-        log.prettyJson(self.getAuthorizationAccount, 'Authorization account', Serializer.getObjectAsDictionary(authorizationAccount), logLevel=log.DEBUG)
+        ###- log.prettyJson(self.getAuthorizationAccount, 'Authorization account', Serializer.getObjectAsDictionary(authorizationAccount), logLevel=log.DEBUG)
         return authorizationAccount
 
 
     @ServiceMethod(requestClass=[AuthorizationAccount.AuthorizationAccount])
     def getAccessesByAccount(self, authorizationAccount):
-        self.loadAccessIfNeeded()
         return [
             access
             for accessMemoryKey, access in self.accesses.items()
@@ -43,31 +43,19 @@ class SecurityService:
 
     @ServiceMethod(requestClass=[[AuthorizationAccessShareDto.AuthorizationAccessShareRequestDto]])
     def shareAll(self, dtoList):
-        self.loadAccessIfNeeded()
         authorizationAccount = self.getAuthorizationAccount()
         for dto in dtoList:
             self.shareResource(dto.resourceKey, dto.domain, dto.operation, dto.accountKey, authorizationAccount)
-        self.overrideRepository()
 
 
     @ServiceMethod(requestClass=[[AuthorizationAccessShareDto.AuthorizationAccessShareRequestDto]])
     def revokeAll(self, dtoList):
-        self.loadAccessIfNeeded()
         authorizationAccount = self.getAuthorizationAccount()
         for dto in dtoList:
             accessMemoryKey = self.revokeResourceAccess(dto.resourceKey, dto.accountKey, authorizationAccount)
-        self.overrideRepository()
-
-
-    @ServiceMethod()
-    def loadAccessIfNeeded(self):
-        if ObjectHelper.isEmpty(self.accesses):
-            for access in self.repository.security.readAccesses():
-                self.accesses[buildAccessMemoryKey(access.resourceKey, access.accountKey)] = access
 
 
     def createOrUpdateOrDeleteAccesses(self, resourceKeys, domain, operation):
-        self.loadAccessIfNeeded()
         authorizationAccount = self.getAuthorizationAccount()
         for resourceKey in resourceKeys:
             accessMemoryKey = buildAccessMemoryKey(resourceKey, authorizationAccount.key)
@@ -77,12 +65,9 @@ class SecurityService:
                 self.createAccess(accessMemoryKey, resourceKey, domain, operation, authorizationAccount)
             else:
                 self.updateAccess(accessMemoryKey, resourceKey, domain, operation, authorizationAccount)
-        if not AuthorizationOperation.GET == operation:
-            self.overrideRepository()
 
 
     def createAccess(self, accessMemoryKey, resourceKey, domain, operation, authorizationAccount):
-        # self.loadAccessIfNeeded()
         self.accesses[accessMemoryKey] = AuthorizationAccess.AuthorizationAccess(
             accountKey = authorizationAccount.key,
             resourceKey = resourceKey,
@@ -105,12 +90,10 @@ class SecurityService:
             self.accesses[accessMemoryKey].operations = [
                 *AuthorizationOperation.READDING_OPERATIONS
             ]
-        # self.overrideRepository()
-        log.prettyJson(self.createAccess, 'Access created', self.accesses[accessMemoryKey], logLevel=log.DEBUG)
+        ###- log.prettyJson(self.createAccess, 'Access created', self.accesses[accessMemoryKey], logLevel=log.DEBUG)
 
 
     def updateAccess(self, accessMemoryKey, resourceKey, domain, operation, authorizationAccount):
-        # self.loadAccessIfNeeded()
         if accessMemoryKey in self.accesses:
             if operation in AuthorizationOperation.WRITTING_OPERATIONS:
                 if AuthorizationOperation.POST == operation:
@@ -127,10 +110,11 @@ class SecurityService:
                             self.accesses[accessMemoryKey].operations.append(op)
             if operation not in self.accesses[accessMemoryKey].operations:
                 self.accesses[accessMemoryKey].operations.append(operation)
-            # self.overrideRepository()
-            log.prettyJson(self.updateAccess, 'Access updated', self.accesses[accessMemoryKey], logLevel=log.DEBUG)
+            ###- log.prettyJson(self.updateAccess, 'Access updated', self.accesses[accessMemoryKey], logLevel=log.DEBUG)
         else:
-            log.failure(self.updateAccess, f'Access not updated. The memmory access key {accessMemoryKey} does not exists', exception=None)
+            ###- log.failure(self.updateAccess, f'Access not updated. The memmory access key {accessMemoryKey} does not exists', exception=None)
+            ...
+
 
     def deleteAccesses(self, accessMemoryKey, resourceKey, domain, operation, authorizationAccount):
         if accessMemoryKey in self.accesses and AuthorizationOperation.DELETE in self.accesses[accessMemoryKey].operations:
@@ -139,7 +123,8 @@ class SecurityService:
                 for access in [*self.accesses.values()]
                 if access.resourceKey == resourceKey
             ]:
-                log.prettyJson(self.deleteAccesses, 'Access revoked', self.accesses.pop(buildAccessMemoryKey(access.resourceKey, access.accountKey)), logLevel=log.DEBUG)
+                deletedAccess = self.accesses.pop(buildAccessMemoryKey(access.resourceKey, access.accountKey))
+                ###- log.prettyJson(self.deleteAccesses, 'Access revoked', deletedAccess, logLevel=log.DEBUG)
 
 
     def shareResource(self, resourceKey, domain, operation, accountKeyToShare, authorizationAccount):
@@ -155,7 +140,6 @@ class SecurityService:
                 )
             else:
                 self.updateShareResource(resourceKey, domain, operation, accountKeyToShare, authorizationAccount)
-        self.overrideRepository()
 
 
     def updateShareResource(self, resourceKey, domain, operation, accountKeyToShare, authorizationAccount):
@@ -167,7 +151,6 @@ class SecurityService:
                 operation,
                 AuthorizationAccount.AuthorizationAccount(key=accountKeyToShare)
             )
-        self.overrideRepository()
 
 
     def revokeResourceAccess(self, resourceKey, accountKeyToRevoke, authorizationAccount):
@@ -175,31 +158,67 @@ class SecurityService:
         if accessMemoryKey in self.accesses:
             accessMemoryKeyToRevoke = buildAccessMemoryKey(resourceKey, accountKeyToRevoke)
             if accessMemoryKeyToRevoke in self.accesses:
-                log.prettyJson(self.revokeResourceAccess, 'Access revoked', self.accesses.pop(accessMemoryKeyToRevoke), logLevel=log.DEBUG)
-        self.overrideRepository()
+                revokedResourceAccess = self.accesses.pop(accessMemoryKeyToRevoke)
+                ###- log.prettyJson(self.revokeResourceAccess, 'Access revoked', revokedResourceAccess, logLevel=log.DEBUG)
+
+
+    @ServiceMethod()
+    def loadAccessIfNeeded(self):
+        if ObjectHelper.isEmpty(self.accesses):
+            for access in self.repository.security.readAccesses():
+                self.accesses[buildAccessMemoryKey(access.resourceKey, access.accountKey)] = access
 
 
     @ServiceMethod()
     def overrideRepository(self):
-        self.repository.security.writeAccesses([*self.accesses.values()])
+        if self.offTransaction():
+            log.debug(self.overrideRepository, 'Overriding authorized access')
+            self.repository.security.writeAccesses([*self.accesses.values()])
+            log.debug(self.overrideRepository, 'Authorized access overriden')
 
 
     @ServiceMethod()
     def isAdmin(self):
         return self.isAdminDomain(self.getAuthorizationAccount())
 
+
     @ServiceMethod()
     def isUser(self):
         return self.isUserDomain(self.getAuthorizationAccount())
+
 
     @ServiceMethod(requestClass=[AuthorizationAccount.AuthorizationAccount])
     def isAdminDomain(self, authorizationAccount):
         return self.containsRole(SecurityContext.CREDIT_CARD_ADMIN, authorizationAccount)
 
+
     @ServiceMethod(requestClass=[AuthorizationAccount.AuthorizationAccount])
     def isUserDomain(self, authorizationAccount):
         return self.containsRole(SecurityContext.CREDIT_CARD_USER, authorizationAccount)
 
+
     @ServiceMethod(requestClass=[EnumItem, AuthorizationAccount.AuthorizationAccount])
     def containsRole(self, role, authorizationAccount):
         return role in authorizationAccount.roles
+
+
+    def lockTransaction(self):
+        transactionKey = Serializer.newUuidAsString()
+        if self.offTransaction():
+            self.loadAccessIfNeeded()
+            self.transactionKey = transactionKey
+        return transactionKey
+
+
+    def unlockTransaction(self, lockKey):
+        if self.onTransaction() and ObjectHelper.equals(self.transactionKey, lockKey):
+            self.transactionKey = None
+        self.overrideRepository()
+
+
+    def onTransaction(self):
+        return ObjectHelper.isNotNone(self.transactionKey)
+
+
+    def offTransaction(self):
+        return not self.onTransaction()

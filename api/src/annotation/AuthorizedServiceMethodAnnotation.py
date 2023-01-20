@@ -38,6 +38,7 @@ def AuthorizedServiceMethod(requestClass=None, operations=None):
         log.wrapper(AuthorizedServiceMethod,f'''wrapping {resourceInstanceMethod.__name__}''')
         def innerResourceInstanceMethod(*args,**kwargs) :
             resourceInstance = args[0]
+            lockKey = resourceInstance.service.security.lockTransaction()
             try :
                 serviceMethodDomain = getAuthorizedDomain(args[0], serviceMethodClass)
                 args = handleAuthorizationAndUpdateArgsBeforeExecuteTheServiceMethod(args, serviceMethodDomain, serviceMethodOperations)
@@ -46,6 +47,7 @@ def AuthorizedServiceMethod(requestClass=None, operations=None):
                 createOrUpdateAccessesAfterExceutedServiceMethod(args, serviceMethodDomain, serviceMethodOperations, methodReturn)
             except Exception as exception :
                 FlaskManager.raiseAndHandleGlobalException(exception, resourceInstance, resourceInstanceMethod)
+            resourceInstance.service.security.unlockTransaction(lockKey)
             return methodReturn
         ReflectionHelper.overrideSignatures(innerResourceInstanceMethod, resourceInstanceMethod)
         return innerResourceInstanceMethod
@@ -110,5 +112,6 @@ def getAuthorizedDomain(service, requestClass):
 
 
 def evaluateAutenticationIntegrity(requestedResource, authorizedRequest):
-    log.prettyPython(evaluateAutenticationIntegrity, 'requestedResource', Serializer.getObjectAsDictionary(requestedResource), logLevel=log.DEBUG)
-    log.prettyPython(evaluateAutenticationIntegrity, 'authorizedRequest', Serializer.getObjectAsDictionary(authorizedRequest), logLevel=log.DEBUG)
+    # log.prettyPython(evaluateAutenticationIntegrity, 'requestedResource', Serializer.getObjectAsDictionary(requestedResource), logLevel=log.DEBUG)
+    # log.prettyPython(evaluateAutenticationIntegrity, 'authorizedRequest', Serializer.getObjectAsDictionary(authorizedRequest), logLevel=log.DEBUG)
+    ...

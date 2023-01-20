@@ -1,4 +1,4 @@
-from python_helper import ObjectHelper
+from python_helper import ObjectHelper, log
 from python_framework import Service, ServiceMethod, Serializer, HttpStatus, GlobalException
 
 from AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
@@ -51,14 +51,41 @@ class PurchaseService:
 
     @AuthorizedServiceMethod(requestClass=[[PurchaseDto.PurchaseRequestDto]], operations=[AuthorizationOperation.POST])
     def createAll(self, dtoList, authorizedRequest):
-        return [
-            self.create(dto)
+        log.status(self.createAll, f'Creating {len(dtoList)} purchases')
+        responseDtoList = [
+            self.internalCreate(dto)
             for dto in dtoList
         ]
+        log.status(self.createAll, f'{len(responseDtoList)} purchases created')
+        self.service.installment.proccessAll(
+            InstallmentDto.InstallmentQueryAllDto(
+                keyList = [
+                    installmentResponseDto.key
+                    for responseDto in responseDtoList
+                    for installmentResponseDto in responseDto.installmentList
+                ]
+            )
+        )
+        return responseDtoList
 
 
     @AuthorizedServiceMethod(requestClass=[PurchaseDto.PurchaseRequestDto], operations=[AuthorizationOperation.POST])
     def create(self, dto, authorizedRequest):
+        responseDto = self.internalCreate(dto)
+        responseDto.installmentList = self.service.installment.proccessAll(
+            InstallmentDto.InstallmentQueryAllDto(
+                keyList = [
+                    installmentResponseDto.key
+                    for installmentResponseDto in responseDto.installmentList
+                ]
+            )
+        )
+        return responseDto
+
+
+    @AuthorizedServiceMethod(requestClass=[PurchaseDto.PurchaseRequestDto], operations=[AuthorizationOperation.POST])
+    def internalCreate(self, dto, authorizedRequest):
+        log.debug(self.internalCreate, f'Creating new purchase')
         creditCardResponseDto = self.service.creditCard.findByKey(dto.creditCardKey)
         if creditCardResponseDto.credit.customLimit - creditCardResponseDto.credit.value > dto.value:
             raise GlobalException(message='Not enought funds', status=HttpStatus.BAD_REQUEST)
@@ -71,8 +98,10 @@ class PurchaseService:
                 InstallmentDto.InstallmentRequestDto(
                     purchaseKey = responseDto.key,
                     label = f'{responseDto.label}',
-                    value = installmentValue if nthInstallment > 0 else installmentValue + MathStaticHelper.roundIt(
-                        responseDto.value - installmentValue * responseDto.installments
+                    value = installmentValue if nthInstallment > 0 else MathStaticHelper.roundIt(
+                        installmentValue + (
+                            responseDto.value - installmentValue * responseDto.installments
+                        )
                     ),
                     installmentAt = self.helper.installment.getInstallmentAt(responseDto, creditCardResponseDto, nthInstallment),
                     installments = responseDto.installments,
@@ -81,6 +110,7 @@ class PurchaseService:
                 for nthInstallment in range(responseDto.installments)
             ]
         )
+        log.debug(self.internalCreate, f'Purchase {responseDto.key} created')
         return self.mapper.purchase.toResponseDto(model, creditCardResponseDto, installmentResponseDtoList)
 
 

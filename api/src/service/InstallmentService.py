@@ -83,6 +83,7 @@ class InstallmentService:
 
     @AuthorizedServiceMethod(requestClass=[InstallmentDto.InstallmentQueryAllDto], operations=[AuthorizationOperation.PATCH])
     def proccessAll(self, queryDto, authorizedRequest):
+        log.status(self.proccessAll, f'Proccesing {len(queryDto.keyList)} installments')
         installmentResponseDtoList = self.findAllProccessableByQuery(queryDto)
         self.updateAllStatusByKeyList(
             [
@@ -99,32 +100,33 @@ class InstallmentService:
         )
         responseDtoList = []
         for creditCardResponseDto in creditCardResponseDtoList:
-            intallmentKeyList = [
+            toProccessInstallmentKeyList = [
                 installmentResponseDto.key
                 for installmentResponseDto in installmentResponseDtoList
                 if creditCardResponseDto.key == installmentResponseDto.purchase.creditCardKey
             ]
+            toProccessInstallmentResponseDtoList = self.service.installment.findAllByKeyIn(toProccessInstallmentKeyList)
             try:
-                processedInstallmentResponseDtoList = self.service.creditCard.proccessAllInstalments(
+                self.service.creditCard.proccessAllInstalments(
                     creditCardResponseDto.key,
-                    intallmentKeyList
+                    toProccessInstallmentResponseDtoList
                 )
-                installmentKeyList = [
+                processingInstallmentKeyList = [
                     installmentResponseDto.key
-                    for installmentResponseDto in processedInstallmentResponseDtoList
-                    if installmentResponseDto.status == InstallmentStatus.PROCESSING
+                    for installmentResponseDto in toProccessInstallmentResponseDtoList
+                    if InstallmentStatus.PROCESSING == installmentResponseDto.status
                 ]
-                if 0 < len(installmentKeyList):
+                if 0 < len(processingInstallmentKeyList):
                     responseDtoList += self.updateAllStatusByKeyList(
-                        installmentKeyList,
+                        processingInstallmentKeyList,
                         InstallmentStatus.PROCESSED
                     )
-                if len(processedInstallmentResponseDtoList) > len(installmentKeyList):
+                if len(toProccessInstallmentResponseDtoList) > len(processingInstallmentKeyList):
                     responseDtoList += self.updateAllStatusByKeyList(
                         [
                             installmentResponseDto.key
-                            for installmentResponseDto in installmentResponseDtoList
-                            if not installmentResponseDto.status == InstallmentStatus.PROCESSING
+                            for installmentResponseDto in toProccessInstallmentResponseDtoList
+                            if installmentResponseDto.key in toProccessInstallmentKeyList and not InstallmentStatus.PROCESSING == installmentResponseDto.status
                         ],
                         InstallmentStatus.ERROR
                     )
@@ -133,10 +135,11 @@ class InstallmentService:
                 responseDtoList += self.updateAllStatusByKeyList(
                     [
                         installmentResponseDto.key
-                        for installmentResponseDto in installmentResponseDtoList
+                        for installmentResponseDto in toProccessInstallmentResponseDtoList
                     ],
                     InstallmentStatus.ERROR
                 )
+        log.status(self.proccessAll, f'{len(responseDtoList)} installments processed')
         return responseDtoList
 
 

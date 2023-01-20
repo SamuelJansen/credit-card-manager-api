@@ -28,35 +28,27 @@ class CreditCardService:
         return self.mapper.creditCard.toResponseDtoList(modelList, creditResponseDtoList)
 
 
-    @AuthorizedServiceMethod(requestClass=[str, [str]], operations=[AuthorizationOperation.PATCH])
-    def proccessAllInstalments(self, key, installmentKeyList, authorizedRequest):
-        if 0 == len(installmentKeyList):
+    @AuthorizedServiceMethod(requestClass=[str, [InstallmentDto.InstallmentResponseDto]], operations=[AuthorizationOperation.PATCH])
+    def proccessAllInstalments(self, key, installmentRequestDtoList, authorizedRequest):
+        log.status(self.proccessAllInstalments, f'Processing {len(installmentRequestDtoList)} installments')
+        if 0 == len(installmentRequestDtoList):
             raise GlobalException(message=f'Installment already processed', status=HttpStatus.BAD_REQUEST)
-        dto = self.findAllByQuery(
-            CreditCardDto.CreditCardQueryAllDto(
-                keyList = [key]
-            )
-        )[0]
-        installmentResponseDtoList = []
-        totalInstallmentValue = 0
-        for installmentResponseDto in self.service.installment.findAllByKeyIn(installmentKeyList):
-            try:
-                if 0 >= dto.customLimit - (dto.value + installmentResponseDto.value + totalInstallmentValue):
-                    self.service.credit.proccessInstalment(dto.creditKey, installmentResponseDto.key)
-                    totalInstallmentValue += installmentResponseDto.value
-                else:
-                    raise GlobalException(message='Not enought limit', status=HttpStatus.BAD_REQUEST)
-                installmentResponseDtoList.append(installmentResponseDto)
-            except Exception as exception:
-                log.error(self.proccessAllInstalments, f'Not possible to proccess installment {installmentResponseDto.key}', exception=exception)
-                installmentResponseDtoList += self.service.installment.updateAllStatusByKeyList([installmentResponseDto.key], InstallmentStatus.ERROR)
         model = self.findAllModelByQuery(
             CreditCardDto.CreditCardQueryAllDto(
                 keyList = [key]
             )
         )[0]
-        model.value = dto.value + totalInstallmentValue
-        self.saveModel(model)
+        installmentResponseDtoList = []
+        for installmentRequestDto in installmentRequestDtoList:
+            try:
+                creditResponseDto = self.service.credit.proccessInstalment(model.creditKey, installmentRequestDto.key)
+                model.value = float(model.value) + installmentRequestDto.value
+                self.saveModel(model)
+                installmentResponseDtoList.append(installmentRequestDto)
+            except Exception as exception:
+                log.error(self.proccessAllInstalments, f'Not possible to proccess installment {installmentRequestDto.key}', exception=exception)
+                installmentResponseDtoList += self.service.installment.updateAllStatusByKeyList([installmentRequestDto.key], InstallmentStatus.ERROR)
+        log.status(self.proccessAllInstalments, f'{len(installmentResponseDtoList)} installments processed')
         return installmentResponseDtoList
 
 

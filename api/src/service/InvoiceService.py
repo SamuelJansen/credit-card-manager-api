@@ -33,16 +33,18 @@ class InvoiceService:
             invoiceResponseDtoList.append(
                 InvoiceDto.InvoiceResponseDto(
                     key = creditCardResponseDto.key,
-                    value = MathStaticHelper.roundIt(
-                        sum(
-                            [
-                                installmentResponseDto.value
-                                for installmentResponseDto in installmentResponseDtoList
-                                if installmentResponseDto.status in InvoiceConstant.INSTALLMENT_COUNTABLE_TYPES
-                            ]
-                        )
+                    value = MathStaticHelper.sumIt(
+                        [
+                            installmentResponseDto.value
+                            for installmentResponseDto in installmentResponseDtoList
+                            if (
+                                installmentResponseDto.value < 0  and
+                                installmentResponseDto.status in InvoiceConstant.INSTALLMENT_COUNTABLE_TYPES
+                            )
+
+                        ]
                     ),
-                    installmentList = sorted(installmentResponseDtoList, key=lambda x: x.installmentAt, reverse=True), ###- ut.sort(key=lambda x: x.count, reverse=True)
+                    installmentList = sorted(installmentResponseDtoList, key=lambda x: x.installmentAt, reverse=True),
                     creditCard = creditCardResponseDto,
                     closeAt = closeAt,
                     dueAt = dueAt

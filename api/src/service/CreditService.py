@@ -68,6 +68,7 @@ class CreditService:
 
     @AuthorizedServiceMethod(requestClass=[str, str], operations=[AuthorizationOperation.PATCH])
     def proccessInstalment(self, key, installmentKey, authorizedRequest):
+        log.debug(self.proccessInstalment, f'Proccesing {installmentKey} installment')
         dto = self.findAllByQuery(
             CreditDto.CreditQueryAllDto(
                 keyList = [key]
@@ -78,6 +79,7 @@ class CreditService:
             dto.value += installmentResponseDto.value
         else:
             raise GlobalException(message='Not enought funds', status=HttpStatus.BAD_REQUEST)
+        log.debug(self.proccessInstalment, f'Updating {key} credit value')
         model = self.findAllModelByQuery(
             CreditDto.CreditQueryAllDto(
                 keyList = [key]
@@ -85,6 +87,8 @@ class CreditService:
         )[0]
         model.value = dto.value
         self.saveModel(model)
+        log.debug(self.proccessInstalment, f'Credit {key} value updated')
+        log.debug(self.proccessInstalment, f'Installment {installmentKey} proccessed')
         return self.mapper.credit.fromModelToResponseDto(model)
 
 
