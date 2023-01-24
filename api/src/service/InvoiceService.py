@@ -41,7 +41,6 @@ class InvoiceService:
                                 installmentResponseDto.value < 0  and
                                 installmentResponseDto.status in InvoiceConstant.INSTALLMENT_COUNTABLE_TYPES
                             )
-
                         ]
                     ),
                     installmentList = sorted(installmentResponseDtoList, key=lambda x: x.installmentAt, reverse=True),

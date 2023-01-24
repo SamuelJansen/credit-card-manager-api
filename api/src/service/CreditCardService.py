@@ -30,7 +30,7 @@ class CreditCardService:
 
     @AuthorizedServiceMethod(requestClass=[str, [InstallmentDto.InstallmentResponseDto]], operations=[AuthorizationOperation.PATCH])
     def proccessAllInstalments(self, key, installmentRequestDtoList, authorizedRequest):
-        log.status(self.proccessAllInstalments, f'Processing {len(installmentRequestDtoList)} installments')
+        log.status(self.proccessAllInstalments, f'Processing {len(installmentRequestDtoList)} {key} credit card installments')
         if 0 == len(installmentRequestDtoList):
             raise GlobalException(message=f'Installment already processed', status=HttpStatus.BAD_REQUEST)
         model = self.findAllModelByQuery(
@@ -46,9 +46,9 @@ class CreditCardService:
                 self.saveModel(model)
                 installmentResponseDtoList.append(installmentRequestDto)
             except Exception as exception:
-                log.error(self.proccessAllInstalments, f'Not possible to proccess installment {installmentRequestDto.key}', exception=exception)
+                log.error(self.proccessAllInstalments, f'Not possible to proccess installment {installmentRequestDto.key} of {key} credit card', exception=exception)
                 installmentResponseDtoList += self.service.installment.updateAllStatusByKeyList([installmentRequestDto.key], InstallmentStatus.ERROR)
-        log.status(self.proccessAllInstalments, f'{len(installmentResponseDtoList)} installments processed')
+        log.status(self.proccessAllInstalments, f'{len(installmentResponseDtoList)} {key} credit card installments processed')
         return installmentResponseDtoList
 
 

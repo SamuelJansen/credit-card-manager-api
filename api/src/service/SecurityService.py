@@ -172,9 +172,9 @@ class SecurityService:
     @ServiceMethod()
     def overrideRepository(self):
         if self.offTransaction():
-            log.debug(self.overrideRepository, 'Overriding authorized access')
+            log.debug(self.overrideRepository, 'Overriding authorized accesses')
             self.repository.security.writeAccesses([*self.accesses.values()])
-            log.status(self.overrideRepository, 'Authorized access overriden')
+            log.status(self.overrideRepository, 'Authorized accesses overriden')
 
 
     @ServiceMethod()
