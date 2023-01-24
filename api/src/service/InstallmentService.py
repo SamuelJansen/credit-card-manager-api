@@ -105,28 +105,28 @@ class InstallmentService:
                 for installmentResponseDto in installmentResponseDtoList
                 if creditCardResponseDto.key == installmentResponseDto.purchase.creditCardKey
             ]
-            toProccessInstallmentResponseDtoList = self.service.installment.findAllByKeyIn(toProccessInstallmentKeyList)
+            toProccessInstallmentDtoList = self.service.installment.findAllByKeyIn(toProccessInstallmentKeyList)
             try:
-                self.service.creditCard.proccessAllInstalments(
+                creditCardInstallmentProcessedList = self.service.creditCard.proccessAllInstalments(
                     creditCardResponseDto.key,
-                    toProccessInstallmentResponseDtoList
+                    toProccessInstallmentDtoList
                 )
                 processingInstallmentKeyList = [
-                    installmentResponseDto.key
-                    for installmentResponseDto in toProccessInstallmentResponseDtoList
-                    if InstallmentStatus.PROCESSING == installmentResponseDto.status
+                    creditCardInstallmentProcessedDto.key
+                    for creditCardInstallmentProcessedDto in creditCardInstallmentProcessedList
+                    if InstallmentStatus.PROCESSING == creditCardInstallmentProcessedDto.status
                 ]
                 if 0 < len(processingInstallmentKeyList):
                     responseDtoList += self.updateAllStatusByKeyList(
                         processingInstallmentKeyList,
                         InstallmentStatus.PROCESSED
                     )
-                if len(toProccessInstallmentResponseDtoList) > len(processingInstallmentKeyList):
+                if len(toProccessInstallmentDtoList) > len(processingInstallmentKeyList):
                     responseDtoList += self.updateAllStatusByKeyList(
                         [
-                            installmentResponseDto.key
-                            for installmentResponseDto in toProccessInstallmentResponseDtoList
-                            if installmentResponseDto.key in toProccessInstallmentKeyList and not InstallmentStatus.PROCESSING == installmentResponseDto.status
+                            creditCardInstallmentProcessedDto.key
+                            for creditCardInstallmentProcessedDto in creditCardInstallmentProcessedList
+                            if creditCardInstallmentProcessedDto.key in toProccessInstallmentKeyList and not InstallmentStatus.PROCESSING == creditCardInstallmentProcessedDto.status
                         ],
                         InstallmentStatus.ERROR
                     )
@@ -134,8 +134,8 @@ class InstallmentService:
                 log.error(self.proccessAll, f'Not possible to proccess installments {intallmentKeyList}', exception=exception)
                 responseDtoList += self.updateAllStatusByKeyList(
                     [
-                        installmentResponseDto.key
-                        for installmentResponseDto in toProccessInstallmentResponseDtoList
+                        toProccessInstallmentDto.key
+                        for toProccessInstallmentDto in toProccessInstallmentDtoList
                     ],
                     InstallmentStatus.ERROR
                 )
