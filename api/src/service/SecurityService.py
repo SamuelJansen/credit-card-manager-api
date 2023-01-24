@@ -165,8 +165,10 @@ class SecurityService:
     @ServiceMethod()
     def loadAccessIfNeeded(self):
         if ObjectHelper.isEmpty(self.accesses):
+            log.debug(self.overrideRepository, 'Loadding authorized accesses')
             for access in self.repository.security.readAccesses():
                 self.accesses[buildAccessMemoryKey(access.resourceKey, access.accountKey)] = access
+            log.status(self.overrideRepository, 'Authorized accesses loaded')
 
 
     @ServiceMethod()
