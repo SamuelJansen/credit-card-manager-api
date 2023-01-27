@@ -14,10 +14,12 @@ class InvoiceService:
         creditCardResponseDtoList = self.service.creditCard.findAllByQuery(CreditCardDto.CreditCardQueryAllDto(keyList=[] if ObjectHelper.isEmpty(queryDto.keyList) else queryDto.keyList))
         invoiceResponseDtoList = []
         for creditCardResponseDto in creditCardResponseDtoList:
+            dueDateTime = self.helper.installment.getCurrentClosingDateTime(DateTimeHelper.of(date=queryDto.date), creditCardResponseDto)
+            dueDate = DateTimeHelper.dateOf(dateTime=dueDateTime)
             closingDateTime = self.helper.installment.getCurrentClosingDateTime(DateTimeHelper.of(date=queryDto.date), creditCardResponseDto)
             closingDate = DateTimeHelper.dateOf(dateTime=closingDateTime)
-            fromDateTime = closingDateTime if queryDto.date >= closingDate else DateTimeHelper.minusMonths(closingDateTime, months=1)
-            toDateTime = closingDateTime if queryDto.date < closingDate else DateTimeHelper.plusMonths(closingDateTime, months=1)
+            fromDateTime = closingDateTime if queryDto.date > dueDate else DateTimeHelper.minusMonths(closingDateTime, months=1)
+            toDateTime = DateTimeHelper.plusMonths(fromDateTime, months=1)
             installmentResponseDtoList = self.service.installment.findAllByQuery(
                 InstallmentDto.InstallmentQueryAllDto(
                     creditCardKeyList = [

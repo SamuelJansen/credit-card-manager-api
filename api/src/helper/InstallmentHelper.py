@@ -29,40 +29,38 @@ class InstallmentHelper:
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getCurrentClosingDateTime(self, purchaseAt, creditCardResponseDto):
-        # dateNow = str(DateTimeHelper.dateNow())
-        # return DateTimeHelper.of(dateTime=f'{dateNow.split(c.DASH)[0]}{c.DASH}{dateNow.split(c.DASH)[1]}{c.DASH}{creditCardResponseDto.closingDay:02} {InstallmentConstant.DEFAULT_CLOSING_TIME}')
-        purchaseAtAsString = str(purchaseAt)
+        purchaseAtAsStringList = self.getPurchaseAtAsStringList(purchaseAt)
         return DateTimeHelper.plusMonths(
-            DateTimeHelper.of(dateTime=f'{purchaseAtAsString.split(c.DASH)[0]}{c.DASH}{purchaseAtAsString.split(c.DASH)[1]}{c.DASH}{creditCardResponseDto.closingDay:02} {InstallmentConstant.DEFAULT_CLOSING_TIME}'),
-            months = 1
+            DateTimeHelper.of(dateTime=f'{purchaseAtAsStringList[0]}{c.DASH}{purchaseAtAsStringList[1]}{c.DASH}{creditCardResponseDto.closingDay:02} {InstallmentConstant.DEFAULT_CLOSING_TIME}'),
+            months = self.getPlusMonsthsByClosingDayComparrison(purchaseAtAsStringList, creditCardResponseDto)
         )
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
-    def getNextClosingDateTime(self, responseDto, creditCardResponseDto):
-        # dateNow = str(DateTimeHelper.dateNow())
-        # return DateTimeHelper.plusMonths(DateTimeHelper.of(dateTime=f'{dateNow.split(c.DASH)[0]}{c.DASH}{dateNow.split(c.DASH)[1]}{c.DASH}{creditCardResponseDto.closingDay:02} {InstallmentConstant.DEFAULT_CLOSING_TIME}'), months=1)
-        purchaseAtAsString = str(purchaseAt)
+    def getNextClosingDateTime(self, purchaseAt, creditCardResponseDto):
         return DateTimeHelper.plusMonths(
-            DateTimeHelper.plusMonths(DateTimeHelper.of(dateTime=f'{purchaseAtAsString.split(c.DASH)[0]}{c.DASH}{purchaseAtAsString.split(c.DASH)[1]}{c.DASH}{creditCardResponseDto.closingDay:02} {InstallmentConstant.DEFAULT_CLOSING_TIME}'), months=1),
+            self.getCurrentClosingDateTime(purchaseAt, creditCardResponseDto),
             months = 1
         )
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getCurrentDueDateTime(self, purchaseAt, creditCardResponseDto):
-        # dateNow = str(DateTimeHelper.dateNow())
-        # return DateTimeHelper.of(dateTime=f'{dateNow.split(c.DASH)[0]}{c.DASH}{dateNow.split(c.DASH)[1]}{c.DASH}{creditCardResponseDto.dueDay:02} {InstallmentConstant.DEFAULT_DUE_TIME}')
-        purchaseAtAsString = str(purchaseAt)
+        purchaseAtAsStringList = self.getPurchaseAtAsStringList(purchaseAt)
         return DateTimeHelper.plusMonths(
-            DateTimeHelper.of(dateTime=f'{purchaseAtAsString.split(c.DASH)[0]}{c.DASH}{purchaseAtAsString.split(c.DASH)[1]}{c.DASH}{creditCardResponseDto.dueDay:02} {InstallmentConstant.DEFAULT_DUE_TIME}'),
-            months = 1
+            DateTimeHelper.of(dateTime=f'{purchaseAtAsStringList[0]}{c.DASH}{purchaseAtAsStringList[1]}{c.DASH}{creditCardResponseDto.dueDay:02} {InstallmentConstant.DEFAULT_DUE_TIME}'),
+            months = self.getPlusMonsthsByClosingDayComparrison(purchaseAtAsStringList, creditCardResponseDto)
         )
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getNextDueDateTime(self, purchaseAt, creditCardResponseDto):
-        # dateNow = str(DateTimeHelper.dateNow())
-        # return DateTimeHelper.plusMonths(DateTimeHelper.of(dateTime=f'{dateNow.split(c.DASH)[0]}{c.DASH}{dateNow.split(c.DASH)[1]}{c.DASH}{creditCardResponseDto.dueDay:02} {InstallmentConstant.DEFAULT_DUE_TIME}'), months=1)
-        purchaseAtAsString = str(purchaseAt)
         return DateTimeHelper.plusMonths(
-            DateTimeHelper.plusMonths(DateTimeHelper.of(dateTime=f'{purchaseAtAsString.split(c.DASH)[0]}{c.DASH}{purchaseAtAsString.split(c.DASH)[1]}{c.DASH}{creditCardResponseDto.dueDay:02} {InstallmentConstant.DEFAULT_DUE_TIME}'), months=1),
+            self.getCurrentDueDateTime(purchaseAt, creditCardResponseDto),
             months = 1
         )
+
+    @HelperMethod(requestClass=[datetime.datetime])
+    def getPurchaseAtAsStringList(self, purchaseAt):
+        return str(str(purchaseAt).split()[0]).split(c.DASH)
+
+    @HelperMethod(requestClass=[[str], CreditCardDto.CreditCardResponseDto])
+    def getPlusMonsthsByClosingDayComparrison(self, purchaseAtAsStringList, creditCardResponseDto):
+        return 0 if creditCardResponseDto.closingDay > int(purchaseAtAsStringList[-1]) else 1

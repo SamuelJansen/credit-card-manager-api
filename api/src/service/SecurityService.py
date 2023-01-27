@@ -212,8 +212,8 @@ class SecurityService:
         return transactionKey
 
 
-    def unlockTransaction(self, lockKey):
-        if self.onTransaction() and ObjectHelper.equals(self.transactionKey, lockKey):
+    def unlockTransaction(self, transactionKey):
+        if self.onTransaction() and ObjectHelper.equals(self.transactionKey, transactionKey):
             self.transactionKey = None
         self.overrideRepository()
 

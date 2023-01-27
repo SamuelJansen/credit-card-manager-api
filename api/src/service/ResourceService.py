@@ -9,7 +9,7 @@ class ResourceService:
 
     @ServiceMethod(requestClass=[[AuthorizationAccessShareDto.AuthorizationAccessShareRequestDto]])
     def shareAllCreditCard(self, dtoList):
-        self.service.security.loadAccessIfNeeded()
+        transactionKey = self.service.security.lockTransaction()
         authorizationAccount = self.service.security.getAuthorizationAccount()
         for dto in dtoList:
             creditCardResponseDtoList = self.service.creditCard.findAllByQuery(CreditCardDto.CreditCardQueryAllDto(keyList = [dto.resourceKey]))
@@ -21,4 +21,4 @@ class ResourceService:
                     for installmentResponseDto in purchaseResponseDto.installmentList:
                         self.service.security.shareResource(installmentResponseDto.key, 'Installment', dto.operation, dto.accountKey, authorizationAccount)
                     self.service.security.shareResource(purchaseResponseDto.key, 'Purchase', dto.operation, dto.accountKey, authorizationAccount)
-        self.service.security.overrideRepository()
+        self.service.security.unlockTransaction(transactionKey)

@@ -38,7 +38,7 @@ def AuthorizedServiceMethod(requestClass=None, operations=None):
         log.wrapper(AuthorizedServiceMethod,f'''wrapping {resourceInstanceMethod.__name__}''')
         def innerResourceInstanceMethod(*args,**kwargs) :
             resourceInstance = args[0]
-            lockKey = resourceInstance.service.security.lockTransaction()
+            transactionKey = resourceInstance.service.security.lockTransaction()
             try :
                 serviceMethodDomain = getAuthorizedDomain(args[0], serviceMethodClass)
                 args = handleAuthorizationAndUpdateArgsBeforeExecuteTheServiceMethod(args, serviceMethodDomain, serviceMethodOperations)
@@ -47,7 +47,7 @@ def AuthorizedServiceMethod(requestClass=None, operations=None):
                 createOrUpdateAccessesAfterExceutedServiceMethod(args, serviceMethodDomain, serviceMethodOperations, methodReturn)
             except Exception as exception :
                 FlaskManager.raiseAndHandleGlobalException(exception, resourceInstance, resourceInstanceMethod)
-            resourceInstance.service.security.unlockTransaction(lockKey)
+            resourceInstance.service.security.unlockTransaction(transactionKey)
             return methodReturn
         ReflectionHelper.overrideSignatures(innerResourceInstanceMethod, resourceInstanceMethod)
         return innerResourceInstanceMethod
