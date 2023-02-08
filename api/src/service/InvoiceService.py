@@ -11,12 +11,13 @@ class InvoiceService:
 
     @ServiceMethod(requestClass=[InvoiceDto.InvoiceQueryDto])
     def findAllByQuery(self, queryDto):
+        transactionKey = self.service.security.lockTransaction()
         creditCardResponseDtoList = self.service.creditCard.findAllByQuery(CreditCardDto.CreditCardQueryAllDto(keyList=[] if ObjectHelper.isEmpty(queryDto.keyList) else queryDto.keyList))
         invoiceResponseDtoList = []
         for creditCardResponseDto in creditCardResponseDtoList:
-            dueDateTime = self.helper.installment.getCurrentClosingDateTime(DateTimeHelper.of(date=queryDto.date), creditCardResponseDto)
+            dueDateTime = self.helper.invoice.getCurrentDueDateTime(DateTimeHelper.of(date=queryDto.date), creditCardResponseDto)
             dueDate = DateTimeHelper.dateOf(dateTime=dueDateTime)
-            closingDateTime = self.helper.installment.getCurrentClosingDateTime(DateTimeHelper.of(date=queryDto.date), creditCardResponseDto)
+            closingDateTime = self.helper.invoice.getCurrentClosingDateTime(DateTimeHelper.of(date=queryDto.date), creditCardResponseDto)
             closingDate = DateTimeHelper.dateOf(dateTime=closingDateTime)
             fromDateTime = closingDateTime if queryDto.date > dueDate else DateTimeHelper.minusMonths(closingDateTime, months=1)
             toDateTime = DateTimeHelper.plusMonths(fromDateTime, months=1)
@@ -51,4 +52,5 @@ class InvoiceService:
                     dueAt = dueAt
                 )
             )
+        self.service.security.unlockTransaction(transactionKey)
         return invoiceResponseDtoList
