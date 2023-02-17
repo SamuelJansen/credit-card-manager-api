@@ -41,12 +41,14 @@ def AuthorizedServiceMethod(requestClass=None, operations=None):
             transactionKey = resourceInstance.service.security.lockTransaction()
             try :
                 serviceMethodDomain = getAuthorizedDomain(args[0], serviceMethodClass)
-                args = handleAuthorizationAndUpdateArgsBeforeExecuteTheServiceMethod(args, serviceMethodDomain, serviceMethodOperations)
-                FlaskManager.validateArgs(args,requestClass,innerResourceInstanceMethod)
+                args = handleAuthorizationAndUpdateArgsBeforeServiceMethodExecution(args, serviceMethodDomain, serviceMethodOperations)
+                FlaskManager.validateArgs(args, requestClass, innerResourceInstanceMethod)
                 methodReturn = resourceInstanceMethod(*args,**kwargs)
                 createOrUpdateAccessesAfterExceutedServiceMethod(args, serviceMethodDomain, serviceMethodOperations, methodReturn)
             except Exception as exception :
+                resourceInstance.service.security.unlockTransaction(transactionKey)
                 FlaskManager.raiseAndHandleGlobalException(exception, resourceInstance, resourceInstanceMethod)
+                raise Exception(f'Unhandled service exception: {exception}')
             resourceInstance.service.security.unlockTransaction(transactionKey)
             return methodReturn
         ReflectionHelper.overrideSignatures(innerResourceInstanceMethod, resourceInstanceMethod)
@@ -54,7 +56,7 @@ def AuthorizedServiceMethod(requestClass=None, operations=None):
     return innerMethodWrapper
 
 
-def handleAuthorizationAndUpdateArgsBeforeExecuteTheServiceMethod(args, serviceMethodDomain, serviceMethodOperations):
+def handleAuthorizationAndUpdateArgsBeforeServiceMethodExecution(args, serviceMethodDomain, serviceMethodOperations):
     if 1 >= len(args):
         raise Exception('Bad implementation of @AuthorizedServiceMethod. The resource cannot be None')
     resourceInstance = args[0]

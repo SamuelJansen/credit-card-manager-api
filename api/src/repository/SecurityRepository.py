@@ -17,6 +17,7 @@ class FileManager:
             os.mkdir(self.uri)
         self.filepath = os.path.join(self.uri, self.filename)
 
+
     def writeContent(self, content):
         try:
             FileHelper.writeContent(self.filepath, content, operation=FileOperation.OVERRIDE_TEXT)
