@@ -12,25 +12,25 @@ class InvoiceService:
     @ServiceMethod(requestClass=[InvoiceDto.InvoiceQueryDto])
     def findAllByQuery(self, queryDto):
         transactionKey = self.service.security.lockTransaction()
-        creditCardResponseDtoList = self.service.creditCard.findAllByQuery(CreditCardDto.CreditCardQueryAllDto(keyList=[] if ObjectHelper.isEmpty(queryDto.keyList) else queryDto.keyList))
+        creditCardResponseDtoList = self.service.creditCard.findAllByQuery(CreditCardDto.CreditCardQueryAllDto(keyList=[] if ObjectHelper.isEmpty(queryDto.creditCardKeyList) else queryDto.creditCardKeyList))
         invoiceResponseDtoList = []
         for creditCardResponseDto in creditCardResponseDtoList:
             dueDateTime = self.helper.invoice.getCurrentDueDateTime(DateTimeHelper.of(date=queryDto.date), creditCardResponseDto)
             dueDate = DateTimeHelper.dateOf(dateTime=dueDateTime)
             closingDateTime = self.helper.invoice.getCurrentClosingDateTime(DateTimeHelper.of(date=queryDto.date), creditCardResponseDto)
             closingDate = DateTimeHelper.dateOf(dateTime=closingDateTime)
-            fromDateTime = closingDateTime if queryDto.date > dueDate else DateTimeHelper.minusMonths(closingDateTime, months=1)
-            toDateTime = DateTimeHelper.plusMonths(fromDateTime, months=1)
+            fromDateTimeRefference = closingDateTime if queryDto.date > dueDate else DateTimeHelper.minusMonths(closingDateTime, months=1)
+            toDateTimeRefference = DateTimeHelper.plusMonths(fromDateTimeRefference, months=1)
             installmentResponseDtoList = self.service.installment.findAllByQuery(
                 InstallmentDto.InstallmentQueryAllDto(
                     creditCardKeyList = [
                         creditCardResponseDto.key
                     ],
-                    fromDateTime = f'{DateTimeHelper.dateOf(dateTime=fromDateTime)} {DateTimeHelper.DEFAULT_TIME_BEGIN}',
-                    toDateTime = f'{DateTimeHelper.dateOf(dateTime=toDateTime)} {DateTimeHelper.DEFAULT_TIME_END}'
+                    fromDateTime = f'{DateTimeHelper.dateOf(dateTime=DateTimeHelper.plusDays(fromDateTimeRefference, days=1))} {DateTimeHelper.DEFAULT_TIME_BEGIN}',
+                    toDateTime = f'{DateTimeHelper.dateOf(dateTime=toDateTimeRefference)} {DateTimeHelper.DEFAULT_TIME_END}'
                 )
             )
-            toYearMonthList = f'{DateTimeHelper.dateOf(dateTime = toDateTime)}'.split('-')[:-1]
+            toYearMonthList = f'{DateTimeHelper.dateOf(dateTime=toDateTimeRefference)}'.split('-')[:-1]
             closeAt = f'{toYearMonthList[0]}-{toYearMonthList[1]}-{creditCardResponseDto.closingDay:02}'
             dueAt = f'{toYearMonthList[0]}-{toYearMonthList[1]}-{creditCardResponseDto.dueDay:02}'
             invoiceResponseDtoList.append(
