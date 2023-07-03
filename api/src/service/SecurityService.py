@@ -1,3 +1,5 @@
+import time
+
 from python_helper import ObjectHelper, log
 from python_framework import Service, ServiceMethod, AuditoryUtil, Serializer, EnumItem, JwtConstant
 
@@ -15,7 +17,8 @@ def buildAccessMemoryKey(resourceKey, accountKey):
 class SecurityService:
 
     accesses = {}
-    transactionKey = None
+    transactionStateChangeAvailable = True
+    transactionKeyList = []
 
     @ServiceMethod()
     def getAuthorizationAccount(self):
@@ -162,21 +165,39 @@ class SecurityService:
                 ###- log.prettyJson(self.revokeResourceAccess, 'Access revoked', revokedResourceAccess, logLevel=log.DEBUG)
 
 
+    def accessesAreLoaded(self):
+        return ObjectHelper.isNotEmpty(self.accesses)
+
+
+    def accessesArentLoaded(self):
+        return not self.accessesAreLoaded()
+
+
     @ServiceMethod()
     def loadAccessIfNeeded(self):
-        if ObjectHelper.isEmpty(self.accesses):
-            log.debug(self.overrideRepository, 'Loadding authorized accesses')
-            for access in self.repository.security.readAccesses():
-                self.accesses[buildAccessMemoryKey(access.resourceKey, access.accountKey)] = access
-            log.status(self.overrideRepository, 'Authorized accesses loaded')
+        if self.accessesArentLoaded():
+            self.lockTransactionStateChange()
+            try:
+                log.debug(self.loadAccessIfNeeded, 'Loadding authorized accesses')
+                for access in self.repository.security.readAccesses():
+                    self.accesses[buildAccessMemoryKey(access.resourceKey, access.accountKey)] = access
+                log.status(self.loadAccessIfNeeded, 'Authorized accesses loaded')
+            except Exception as exception:
+                log.failure(self.loadAccessIfNeeded, '''Things didn't whent well''', exception=exception)
+            self.unlockTransactionStateChange()
 
 
     @ServiceMethod()
     def overrideRepository(self):
         if self.offTransaction():
-            log.debug(self.overrideRepository, 'Overriding authorized accesses')
-            self.repository.security.writeAccesses([*self.accesses.values()])
-            log.status(self.overrideRepository, 'Authorized accesses overriden')
+            self.lockTransactionStateChange()
+            try:
+                log.debug(self.overrideRepository, 'Overriding authorized accesses')
+                self.repository.security.writeAccesses([*self.accesses.values()])
+                log.status(self.overrideRepository, 'Authorized accesses overriden')
+            except Exception as exception:
+                log.failure(self.overrideRepository, '''Things didn't whent well''', exception=exception)
+            self.unlockTransactionStateChange()
 
 
     @ServiceMethod()
@@ -206,21 +227,53 @@ class SecurityService:
 
     def lockTransaction(self):
         transactionKey = Serializer.newUuidAsString()
+        ###- WARNING
+        ###- self.lockTransactionIfNeeded(transactionKey) changes self.offTransaction() value
+        ###- also, self.loadAccessIfNeeded() takes a lot of time to proccess
         if self.offTransaction():
+            self.lockTransactionIfNeeded(transactionKey)
             self.loadAccessIfNeeded()
-            self.transactionKey = transactionKey
+        else:
+            self.lockTransactionIfNeeded(transactionKey)
         return transactionKey
 
 
     def unlockTransaction(self, transactionKey):
-        if self.onTransaction() and ObjectHelper.equals(self.transactionKey, transactionKey):
-            self.transactionKey = None
+        self.unlockTransactionIfNeeded(transactionKey)
         self.overrideRepository()
 
 
+    def lockTransactionIfNeeded(self, transactionKey):
+        if transactionKey not in self.transactionKeyList:
+            self.transactionKeyList.append(transactionKey)
+        else:
+            log.warning(self.lockTransactionIfNeeded, f'Somehow the {transactionKey} transaction was already starded once (or more)')
+
+
+    def unlockTransactionIfNeeded(self, transactionKey):
+        if transactionKey in self.transactionKeyList:
+            self.transactionKeyList.remove(transactionKey)
+        else:
+            log.warning(self.unlockTransactionIfNeeded, f'Somehow the {transactionKey} transaction was already over or did ended twice (or more)')
+
+
     def onTransaction(self):
-        return ObjectHelper.isNotNone(self.transactionKey)
+        return ObjectHelper.isNotEmpty(self.transactionKeyList)
 
 
     def offTransaction(self):
         return not self.onTransaction()
+
+    def lockTransactionStateChange(self):
+        while self.transactionStateChangeIsNotAvailable():
+            time.sleep(0.05)
+        self.transactionStateChangeAvailable = False
+
+    def unlockTransactionStateChange(self):
+        self.transactionStateChangeAvailable = True
+
+    def transactionStateChangeIsAvailable(self):
+        return True and self.transactionStateChangeAvailable
+
+    def transactionStateChangeIsNotAvailable(self):
+        return not self.transactionStateChangeIsAvailable()
