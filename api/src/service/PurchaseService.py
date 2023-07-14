@@ -1,7 +1,7 @@
 from python_helper import ObjectHelper, log
 from python_framework import Service, ServiceMethod, Serializer, HttpStatus, GlobalException
 
-from AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
+from annotation.AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
 
 from domain import AuthorizationOperation
 from dto import PurchaseDto, InstallmentDto
