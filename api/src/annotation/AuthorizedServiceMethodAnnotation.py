@@ -38,7 +38,10 @@ def AuthorizedServiceMethod(requestClass=None, operations=None):
         log.wrapper(AuthorizedServiceMethod,f'''wrapping {resourceInstanceMethod.__name__}''')
         def innerResourceInstanceMethod(*args,**kwargs) :
             resourceInstance = args[0]
+            ###- print('\n', resourceInstance.service.security.getState())
             transactionKey = resourceInstance.service.security.lockTransaction()
+            ###- print('in  AuthorizedServiceMethod', transactionKey)
+            ###- print(resourceInstance.service.security.getState(), '\n')
             try :
                 serviceMethodDomain = getAuthorizedDomain(args[0], serviceMethodClass)
                 args = handleAuthorizationAndUpdateArgsBeforeServiceMethodExecution(args, serviceMethodDomain, serviceMethodOperations)
@@ -46,9 +49,11 @@ def AuthorizedServiceMethod(requestClass=None, operations=None):
                 methodReturn = resourceInstanceMethod(*args,**kwargs)
                 createOrUpdateAccessesAfterExceutedServiceMethod(args, serviceMethodDomain, serviceMethodOperations, methodReturn)
             except Exception as exception :
-                resourceInstance.service.security.unlockTransaction(transactionKey)
+                resourceInstance.service.security.unlockAllTransactionsDueError(transactionKey)
+                ###- print('out AuthorizedServiceMethod', transactionKey)
                 FlaskManager.raiseAndHandleGlobalException(exception, resourceInstance, resourceInstanceMethod)
                 raise Exception(f'Unhandled service exception: {exception}')
+            ###- print('out AuthorizedServiceMethod', transactionKey)
             resourceInstance.service.security.unlockTransaction(transactionKey)
             return methodReturn
         ReflectionHelper.overrideSignatures(innerResourceInstanceMethod, resourceInstanceMethod)
@@ -104,13 +109,13 @@ def getAuthorizedOperations(operations):
 def getAuthorizedDomain(service, requestClass):
     serviceName = ReflectionHelper.getClassName(service)
     return AuthorizationStaticHelper.resolveDomain(None, serviceName.replace('Service', ''))
-    if ObjectHelper.isEmpty(requestClass):
-        raise Exception('Bad implementation of @AuthorizedServiceMethod. The requestClass=[] parameter cannot be empty')
-    if ObjectHelper.isEmpty(requestClass[0]):
-        raise Exception('Bad implementation of @AuthorizedServiceMethod. The requestClass=[[]] parameter cannot be empty')
-    if ObjectHelper.isCollection(requestClass[0]):
-        return requestClass[0][0]
-    return requestClass[0]
+    # if ObjectHelper.isEmpty(requestClass):
+    #     raise Exception('Bad implementation of @AuthorizedServiceMethod. The requestClass=[] parameter cannot be empty')
+    # if ObjectHelper.isEmpty(requestClass[0]):
+    #     raise Exception('Bad implementation of @AuthorizedServiceMethod. The requestClass=[[]] parameter cannot be empty')
+    # if ObjectHelper.isCollection(requestClass[0]):
+    #     return requestClass[0][0]
+    # return requestClass[0]
 
 
 def evaluateAutenticationIntegrity(requestedResource, authorizedRequest):

@@ -17,6 +17,7 @@ def buildAccessMemoryKey(resourceKey, accountKey):
 class SecurityService:
 
     accesses = {}
+    loadingAccess = False
     transactionStateChangeAvailable = True
     transactionKeyList = []
 
@@ -175,7 +176,9 @@ class SecurityService:
 
     @ServiceMethod()
     def loadAccessIfNeeded(self):
-        if self.accessesArentLoaded():
+        log.debug(self.loadAccessIfNeeded, 'Loading authorized accesses proccess called')
+        if self.mustLoadAccess():
+            self.loadingAccess = True
             self.lockTransactionStateChange()
             try:
                 log.debug(self.loadAccessIfNeeded, 'Loadding authorized accesses')
@@ -184,12 +187,16 @@ class SecurityService:
                 log.status(self.loadAccessIfNeeded, 'Authorized accesses loaded')
             except Exception as exception:
                 log.failure(self.loadAccessIfNeeded, '''Things didn't whent well''', exception=exception)
+            self.loadingAccess = False
             self.unlockTransactionStateChange()
+        log.debug(self.loadAccessIfNeeded, 'Loading authorized accesses proccess completed')
 
 
     @ServiceMethod()
     def overrideRepository(self):
+        log.debug(self.overrideRepository, 'Override repository proccess called')
         if self.offTransaction():
+            self.awaitLoadingAccessIfNeeded()
             self.lockTransactionStateChange()
             try:
                 log.debug(self.overrideRepository, 'Overriding authorized accesses')
@@ -198,6 +205,7 @@ class SecurityService:
             except Exception as exception:
                 log.failure(self.overrideRepository, '''Things didn't whent well''', exception=exception)
             self.unlockTransactionStateChange()
+        log.debug(self.overrideRepository, 'Override repository proccess completed')
 
 
     @ServiceMethod()
@@ -223,13 +231,13 @@ class SecurityService:
     @ServiceMethod(requestClass=[EnumItem, AuthorizationAccount.AuthorizationAccount])
     def containsRole(self, role, authorizationAccount):
         return role in authorizationAccount.roles
-
+    
 
     def lockTransaction(self):
         transactionKey = Serializer.newUuidAsString()
         ###- WARNING
         ###- self.lockTransactionIfNeeded(transactionKey) changes self.offTransaction() value
-        ###- also, self.loadAccessIfNeeded() takes a lot of time to proccess
+        ###- also, self.loadAccessIfNeeded() takes a lot of time to proccess, therefore its imperative to lock transaction before load access
         if self.offTransaction():
             self.lockTransactionIfNeeded(transactionKey)
             self.loadAccessIfNeeded()
@@ -242,16 +250,27 @@ class SecurityService:
         self.unlockTransactionIfNeeded(transactionKey)
         self.overrideRepository()
 
+    def unlockAllTransactionsDueError(self, transactionKeyError):
+        log.prettyJson(self.unlockAllTransactionsDueError, f'Unlocking all transactions due {transactionKeyError} transaction error', self.transactionKeyList, logLevel=log.WARNING)
+        for transactionKey in [*self.transactionKeyList]:
+            self.unlockTransaction(transactionKey)
+        log.warning(self.unlockAllTransactionsDueError, f'All transactions were unlocked due {transactionKeyError} transaction error')
+        
+
 
     def lockTransactionIfNeeded(self, transactionKey):
+        self.awaitLoadingAccessIfNeeded()
         if transactionKey not in self.transactionKeyList:
+            ###- print('in  lockTransactionIfNeeded', transactionKey)
             self.transactionKeyList.append(transactionKey)
         else:
             log.warning(self.lockTransactionIfNeeded, f'Somehow the {transactionKey} transaction was already starded once (or more)')
 
 
     def unlockTransactionIfNeeded(self, transactionKey):
+        self.awaitLoadingAccessIfNeeded()
         if transactionKey in self.transactionKeyList:
+            ###- print('out unlockTransactionIfNeeded', transactionKey)
             self.transactionKeyList.remove(transactionKey)
         else:
             log.warning(self.unlockTransactionIfNeeded, f'Somehow the {transactionKey} transaction was already over or did ended twice (or more)')
@@ -264,16 +283,50 @@ class SecurityService:
     def offTransaction(self):
         return not self.onTransaction()
 
+
     def lockTransactionStateChange(self):
-        while self.transactionStateChangeIsNotAvailable():
-            time.sleep(0.05)
+        self.awaitTransactionStateChangeToBeAvailable()
         self.transactionStateChangeAvailable = False
+
 
     def unlockTransactionStateChange(self):
         self.transactionStateChangeAvailable = True
+    
+
+    def mustLoadAccess(self):
+        return self.accessesArentLoaded() and not self.onLoadingAccess()
+
 
     def transactionStateChangeIsAvailable(self):
         return True and self.transactionStateChangeAvailable
 
+
     def transactionStateChangeIsNotAvailable(self):
         return not self.transactionStateChangeIsAvailable()
+
+
+    def onLoadingAccess(self):
+        return True and self.loadingAccess
+    
+
+    def awaitLoadingAccessIfNeeded(self):
+        while self.onLoadingAccess():
+            time.sleep(0.05)
+
+
+    def awaitTransactionStateChangeToBeAvailable(self):
+        while self.transactionStateChangeIsNotAvailable():
+            time.sleep(0.05)
+
+
+    def getState(self):
+        return {
+            'mustLoadAccess': self.mustLoadAccess(),
+            'accessesCount': len(list(self.accesses.keys())),
+            'onTransaction': self.onTransaction(),
+            'transactionStateChangeAvailable': self.transactionStateChangeAvailable,
+            'transactionStateChangeIsNotAvailable': self.transactionStateChangeIsNotAvailable(),
+            'transactionKeyList': self.transactionKeyList,
+            'loadingAccess': self.loadingAccess,
+            'onLoadingAccess': self.onLoadingAccess()
+        }

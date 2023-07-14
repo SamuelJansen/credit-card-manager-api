@@ -6,7 +6,7 @@ from dto import AuthorizationAccessShareDto
 @Controller(
     url = '/resource/share',
     tag = 'Resource',
-    description = 'Security controller'
+    description = 'Resource controller'
 #     , logRequest = True
 #     , logResponse = True
 )

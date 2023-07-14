@@ -57,6 +57,7 @@ class PurchaseService:
             for dto in dtoList
         ]
         log.status(self.createAll, f'{len(responseDtoList)} purchases created')
+        log.status(self.createAll, f'Processing {len(responseDtoList)} purchases')
         self.service.installment.proccessAll(
             InstallmentDto.InstallmentQueryAllDto(
                 keyList = [
@@ -66,6 +67,7 @@ class PurchaseService:
                 ]
             )
         )
+        log.status(self.createAll, f'{len(responseDtoList)} purchases processed')
         return responseDtoList
 
 

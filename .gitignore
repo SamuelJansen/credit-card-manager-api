@@ -17,6 +17,7 @@ dummydata/
 temp/
 migrations.yml
 security.json
+*-security.json
 
 # C extensions
 *.so
