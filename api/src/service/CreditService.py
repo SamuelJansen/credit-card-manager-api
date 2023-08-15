@@ -69,23 +69,15 @@ class CreditService:
     @AuthorizedServiceMethod(requestClass=[str, str], operations=[AuthorizationOperation.PATCH])
     def proccessInstalment(self, key, installmentKey, authorizedRequest):
         log.debug(self.proccessInstalment, f'Proccesing {installmentKey} installment')
-        dto = self.findAllByQuery(
-            CreditDto.CreditQueryAllDto(
-                keyList = [key]
-            )
-        )[0]
-        installmentResponseDto = self.service.installment.findByKey(installmentKey)
-        if 0 >= dto.customLimit - (dto.value + installmentResponseDto.value):
-            dto.value += installmentResponseDto.value
-        else:
-            raise GlobalException(message='Not enought funds', status=HttpStatus.BAD_REQUEST)
-        log.debug(self.proccessInstalment, f'Updating {key} credit value')
         model = self.findAllModelByQuery(
             CreditDto.CreditQueryAllDto(
                 keyList = [key]
             )
         )[0]
-        model.value = dto.value
+        installmentResponseDto = self.service.installment.findByKey(installmentKey)
+        self.validator.credit.validateTransaction(model, (float(model.value) + installmentResponseDto.value))
+        log.debug(self.proccessInstalment, f'Updating {key} credit value')
+        model.value = float(model.value) + installmentResponseDto.value
         self.saveModel(model)
         log.debug(self.proccessInstalment, f'Credit {key} value updated')
         log.debug(self.proccessInstalment, f'Installment {installmentKey} proccessed')

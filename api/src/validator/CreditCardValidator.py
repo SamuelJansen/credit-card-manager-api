@@ -10,13 +10,6 @@ from converter.static import AuthorizationStaticConverter
 @Validator()
 class CreditCardValidator:
 
-    @ValidatorMethod(requestClass=[CreditCard.CreditCard, float])
-    def validateTransaction(self, model, limit):
-        if ObjectHelper.isNone(model) or ObjectHelper.isNone(limit):
-            raise GlobalException(logMessage=f'Invalid operation. Credit card: {model}, limit: {limit}', status=HttpStatus.INTERNAL_SERVER_ERROR)
-        if 0 > model.limit + limit:
-            raise GlobalException(message=f'Not enought funds', status=HttpStatus.BAD_REQUEST)
-
 
     @ValidatorMethod(requestClass=[str])
     def validateExistsByKey(self, key):

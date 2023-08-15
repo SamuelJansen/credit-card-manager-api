@@ -1,7 +1,7 @@
 from python_helper import ObjectHelper, log
 from python_framework import Service, ServiceMethod, Serializer, StaticConverter, EnumItem, GlobalException, HttpStatus
 
-from AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
+from annotation.AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
 
 from constant import InstallmentConstant
 from domain import AuthorizationOperation
@@ -131,7 +131,7 @@ class InstallmentService:
                         InstallmentStatus.ERROR
                     )
             except Exception as exception:
-                log.error(self.proccessAll, f'Not possible to proccess installments {intallmentKeyList}', exception=exception)
+                log.error(self.proccessAll, f'Not possible to proccess installments {queryDto.keyList}', exception=exception)
                 responseDtoList += self.updateAllStatusByKeyList(
                     [
                         toProccessInstallmentDto.key

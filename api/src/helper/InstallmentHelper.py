@@ -4,7 +4,7 @@ from python_helper import DateTimeHelper
 from python_framework import Helper, HelperMethod
 
 from constant import InstallmentConstant
-from helper.static import MathStaticHelper
+from helper.static import MathStaticHelper, IntervalStaticHelper
 from dto import CreditCardDto, PurchaseDto
 
 
@@ -26,41 +26,41 @@ class InstallmentHelper:
             date=DateTimeHelper.dateOf(dateTime=DateTimeHelper.plusMonths(currentPurchaseDateTime, months=nthInstallment)),
             time=DateTimeHelper.timeOf(dateTime=currentPurchaseDateTime)
         )
+    
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getCurrentClosingDateTime(self, purchaseAt, creditCardResponseDto):
-        purchaseAtAsStringList = self.getDateTimeAsStringList(purchaseAt)
-        return DateTimeHelper.plusMonths(
-            DateTimeHelper.of(dateTime=f'{purchaseAtAsStringList[0]}{c.DASH}{purchaseAtAsStringList[1]}{c.DASH}{creditCardResponseDto.closingDay:02} {InstallmentConstant.DEFAULT_CLOSING_TIME}'),
-            months = self.getPlusMonsthsByClosingDayComparrison(purchaseAtAsStringList, creditCardResponseDto)
-        )
+        # purchaseAtAsStringList = self.getDateTimeAsStringList(purchaseAt)
+        # return DateTimeHelper.plusMonths(
+        #     DateTimeHelper.of(dateTime=f'{purchaseAtAsStringList[0]}{c.DASH}{purchaseAtAsStringList[1]}{c.DASH}{creditCardResponseDto.closingDay:02} {InstallmentConstant.DEFAULT_CLOSING_TIME}'),
+        #     months = self.getPlusMonsthsByClosingDayComparrison(purchaseAtAsStringList, creditCardResponseDto)
+        # )
+        return IntervalStaticHelper.getCurrentClosingDateTime(purchaseAt, creditCardResponseDto.closingDay, creditCardResponseDto.closingDay)
+
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getNextClosingDateTime(self, purchaseAt, creditCardResponseDto):
-        return DateTimeHelper.plusMonths(
-            self.getCurrentClosingDateTime(purchaseAt, creditCardResponseDto),
-            months = 1
-        )
+        # return DateTimeHelper.plusMonths(
+        #     self.getCurrentClosingDateTime(purchaseAt, creditCardResponseDto),
+        #     months = 1
+        # )
+        return IntervalStaticHelper.getNextClosingDateTime(purchaseAt, creditCardResponseDto.closingDay, creditCardResponseDto.closingDay)
+
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getCurrentDueDateTime(self, purchaseAt, creditCardResponseDto):
-        purchaseAtAsStringList = self.getDateTimeAsStringList(purchaseAt)
-        return DateTimeHelper.plusMonths(
-            DateTimeHelper.of(dateTime=f'{purchaseAtAsStringList[0]}{c.DASH}{purchaseAtAsStringList[1]}{c.DASH}{creditCardResponseDto.dueDay:02} {InstallmentConstant.DEFAULT_DUE_TIME}'),
-            months = self.getPlusMonsthsByClosingDayComparrison(purchaseAtAsStringList, creditCardResponseDto)
-        )
+        # purchaseAtAsStringList = self.getDateTimeAsStringList(purchaseAt)
+        # return DateTimeHelper.plusMonths(
+        #     DateTimeHelper.of(dateTime=f'{purchaseAtAsStringList[0]}{c.DASH}{purchaseAtAsStringList[1]}{c.DASH}{creditCardResponseDto.dueDay:02} {InstallmentConstant.DEFAULT_DUE_TIME}'),
+        #     months = self.getPlusMonsthsByClosingDayComparrison(purchaseAtAsStringList, creditCardResponseDto)
+        # )
+        return IntervalStaticHelper.getCurrentDueDateTime(purchaseAt, creditCardResponseDto.dueDay, creditCardResponseDto.closingDay)
+
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getNextDueDateTime(self, purchaseAt, creditCardResponseDto):
-        return DateTimeHelper.plusMonths(
-            self.getCurrentDueDateTime(purchaseAt, creditCardResponseDto),
-            months = 1
-        )
-
-    @HelperMethod(requestClass=[datetime.datetime])
-    def getDateTimeAsStringList(self, purchaseAt):
-        return str(str(purchaseAt).split()[0]).split(c.DASH)
-
-    @HelperMethod(requestClass=[[str], CreditCardDto.CreditCardResponseDto])
-    def getPlusMonsthsByClosingDayComparrison(self, purchaseAtAsStringList, creditCardResponseDto):
-        return 0 if creditCardResponseDto.closingDay > int(purchaseAtAsStringList[-1]) else 1
+        # return DateTimeHelper.plusMonths(
+        #     self.getCurrentDueDateTime(purchaseAt, creditCardResponseDto),
+        #     months = 1
+        # )
+        return IntervalStaticHelper.getNextDueDateTime(purchaseAt, creditCardResponseDto.dueDay, creditCardResponseDto.closingDay)
