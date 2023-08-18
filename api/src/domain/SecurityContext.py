@@ -3,6 +3,9 @@ from python_framework import Enum, EnumItem
 
 @Enum()
 class SecurityContextEnumeration:
+
+    RESET_ADMIN = EnumItem()
+
     ADMIN = EnumItem()
     CREDIT_ADMIN = EnumItem()
     CREDIT_CARD_ADMIN = EnumItem()

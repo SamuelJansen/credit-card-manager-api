@@ -11,7 +11,7 @@ class CreditCard(MODEL):
 
     id = sap.Column(sap.Integer(), sap.Sequence(f'{__tablename__}{sap.ID}{sap.SEQ}'), primary_key=True)
     key = sap.Column(sap.String(sap.MEDIUM_STRING_SIZE), nullable=False, unique=True)
-    creditKey = sap.Column(sap.Integer(), nullable=False)
+    creditKey = sap.Column(sap.String(sap.MEDIUM_STRING_SIZE), nullable=False)
     label = sap.Column(sap.String(sap.MEDIUM_STRING_SIZE), nullable=False)
     customLimit = sap.Column(sap.Float(*ModelConstant.DEFAUTL_FLOAT_MONETARY_FORMAT), nullable=False, default=CreditCardConstant.DEFAULT_CUSTOM_LIMIT)
     value = sap.Column(sap.Float(*ModelConstant.DEFAUTL_FLOAT_MONETARY_FORMAT), nullable=False, default=CreditCardConstant.DEFAULT_VALUE)

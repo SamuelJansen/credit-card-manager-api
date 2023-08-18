@@ -1,3 +1,4 @@
+from python_helper import ObjectHelper
 from python_framework import SqlAlchemyProxy as sap
 from python_framework import Repository
 
@@ -30,6 +31,16 @@ class CreditCardRepository:
 
     def deleteByKey(self, key):
         self.repository.deleteByKeyAndCommit(key, self.model)
+
+    # def deleteAllByKeyIn(self, keyList):
+    #     if ObjectHelper.isEmpty(keyList):
+    #         return []
+    #     self.repository.deleteAllByKeyInAndCommit(keyList, self.model)
+
+    def deleteAllByKeyIn(self, keyList):
+        if ObjectHelper.isEmpty(keyList):
+            return []
+        self.repository.deleteAllByKeyInAndCommit(self.model, keyList)
 
     def findById(self, id):
         return self.repository.findByIdAndCommit(id, self.model)

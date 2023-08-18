@@ -1,5 +1,5 @@
-from python_helper import Constant as c
-from python_helper import ObjectHelper, ReflectionHelper, Method
+from python_helper import ObjectHelper, Method
+
 from python_framework import SqlAlchemyProxy as sap
 from python_framework import Repository
 
@@ -37,7 +37,7 @@ class InstallmentRepository:
     @Method
     def existsByQueryAndCommit(self, query, modelClass, joinList=None, additionalCondition=None):
         exists = self.repository.session.query(
-            literal(True)
+            sap.literal(True)
         ).filter(
             self.getQueryFilter(
                 query,
@@ -72,6 +72,16 @@ class InstallmentRepository:
 
     def deleteByKey(self, key):
         self.repository.deleteByKeyAndCommit(key, self.model)
+
+    # def deleteAllByKeyIn(self, keyList):
+    #     if ObjectHelper.isEmpty(keyList):
+    #         return []
+    #     self.repository.deleteAllByKeyInAndCommit(keyList, self.model)
+
+    def deleteAllByKeyIn(self, keyList):
+        if ObjectHelper.isEmpty(keyList):
+            return []
+        self.repository.deleteAllByKeyInAndCommit(self.model, keyList)
 
     def findById(self, id):
         return self.repository.findByIdAndCommit(id, self.model)

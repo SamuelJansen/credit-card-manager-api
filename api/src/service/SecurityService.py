@@ -261,7 +261,6 @@ class SecurityService:
     def lockTransactionIfNeeded(self, transactionKey):
         self.awaitLoadingAccessIfNeeded()
         if transactionKey not in self.transactionKeyList:
-            ###- print('in  lockTransactionIfNeeded', transactionKey)
             self.transactionKeyList.append(transactionKey)
         else:
             log.warning(self.lockTransactionIfNeeded, f'Somehow the {transactionKey} transaction was already starded once (or more)')
@@ -270,7 +269,6 @@ class SecurityService:
     def unlockTransactionIfNeeded(self, transactionKey):
         self.awaitLoadingAccessIfNeeded()
         if transactionKey in self.transactionKeyList:
-            ###- print('out unlockTransactionIfNeeded', transactionKey)
             self.transactionKeyList.remove(transactionKey)
         else:
             log.warning(self.unlockTransactionIfNeeded, f'Somehow the {transactionKey} transaction was already over or did ended twice (or more)')

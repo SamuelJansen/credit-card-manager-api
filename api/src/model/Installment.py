@@ -12,7 +12,7 @@ class Installment(MODEL):
 
     id = sap.Column(sap.Integer(), sap.Sequence(f'{__tablename__}{sap.ID}{sap.SEQ}'), primary_key=True)
     key = sap.Column(sap.String(sap.MEDIUM_STRING_SIZE), nullable=False, unique=True)
-    purchaseKey = sap.Column(sap.Integer(), nullable=False)
+    purchaseKey = sap.Column(sap.String(sap.MEDIUM_STRING_SIZE), nullable=False)
     label = sap.Column(sap.String(sap.MEDIUM_STRING_SIZE), nullable=False)
     value = sap.Column(sap.Float(*ModelConstant.DEFAUTL_FLOAT_MONETARY_FORMAT), nullable=False, default=InstallmentConstant.DEFAULT_VALUE)
     installmentAt = sap.Column(sap.DateTime(), nullable=False, default=DateTimeHelper.now())

@@ -190,4 +190,11 @@ class InstallmentService:
 
     @AuthorizedServiceMethod(requestClass=[str], operations=[AuthorizationOperation.DELETE])
     def deleteByKey(self, key, authorizedRequest):
+        log.info(self.deleteByKey, f'Deleting installment: {key}')
         self.repository.installment.deleteByKey(key)
+
+
+    @AuthorizedServiceMethod(requestClass=[[str]], operations=[AuthorizationOperation.DELETE])
+    def deleteAllByKeyIn(self, keyList, authorizedRequest):
+        log.info(self.deleteAllByKeyIn, f'Deleting installments: {keyList}')
+        self.repository.installment.deleteAllByKeyIn(keyList)

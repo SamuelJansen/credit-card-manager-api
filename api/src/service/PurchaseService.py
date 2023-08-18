@@ -123,4 +123,11 @@ class PurchaseService:
 
     @AuthorizedServiceMethod(requestClass=[str], operations=[AuthorizationOperation.DELETE])
     def deleteByKey(self, key, authorizedRequest):
+        log.info(self.deleteByKey, f'Deleting purchase: {key}')
         self.repository.purchase.deleteByKey(key)
+
+
+    @AuthorizedServiceMethod(requestClass=[[str]], operations=[AuthorizationOperation.DELETE])
+    def deleteAllByKeyIn(self, keyList, authorizedRequest):
+        log.info(self.deleteAllByKeyIn, f'Deleting purchases: {keyList}')
+        self.repository.purchase.deleteAllByKeyIn(keyList)

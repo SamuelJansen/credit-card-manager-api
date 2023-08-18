@@ -1,7 +1,7 @@
 from python_helper import ObjectHelper, log
 from python_framework import Service, ServiceMethod, Serializer, GlobalException, HttpStatus
 
-from AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
+from annotation.AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
 
 from domain import AuthorizationOperation
 from enumeration.InstallmentStatus import InstallmentStatus
@@ -96,4 +96,11 @@ class CreditService:
 
     @AuthorizedServiceMethod(requestClass=[str], operations=[AuthorizationOperation.DELETE])
     def deleteByKey(self, key, authorizedRequest):
+        log.info(self.deleteByKey, f'Deleting credit: {key}')
         self.repository.credit.deleteByKey(key)
+
+
+    @AuthorizedServiceMethod(requestClass=[[str]], operations=[AuthorizationOperation.DELETE])
+    def deleteAllByKeyIn(self, keyList, authorizedRequest):
+        log.info(self.deleteAllByKeyIn, f'Deleting credits: {keyList}')
+        self.repository.credit.deleteAllByKeyIn(keyList)

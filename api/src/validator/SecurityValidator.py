@@ -25,7 +25,8 @@ class SecurityValidator:
             access.resourceKey
             for access in authorizedAccesses
         ]
-        if ObjectHelper.isEmpty(authorizedResourceKeys) and requestedAuthorization.operation in [AuthorizationOperation.GET, AuthorizationOperation.PUT, AuthorizationOperation.PATCH, AuthorizationOperation.DELETE]:
+        ###- if ObjectHelper.isEmpty(authorizedResourceKeys) and requestedAuthorization.operation in [AuthorizationOperation.GET, AuthorizationOperation.PUT, AuthorizationOperation.PATCH, AuthorizationOperation.DELETE]:
+        if ObjectHelper.isEmpty(authorizedResourceKeys) and requestedAuthorization.operation in [AuthorizationOperation.PUT, AuthorizationOperation.PATCH, AuthorizationOperation.DELETE]:
             ###- if ObjectHelper.isEmpty(authorizedResourceKeys) and requestedAuthorization.operation in [AuthorizationOperation.PUT, AuthorizationOperation.PATCH, AuthorizationOperation.DELETE]:
             raise GlobalException(message=f'The account {authorizationAccount.key} has no access to the {requestedAuthorization.domain} resource', logMessage='Authorized resource key cannot be empty', status=HttpStatus.FORBIDDEN)
         return AuthorizedRequest.AuthorizedRequest(

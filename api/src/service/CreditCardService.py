@@ -1,7 +1,7 @@
 from python_helper import ObjectHelper, log
 from python_framework import Service, ServiceMethod, Serializer, GlobalException, HttpStatus
 
-from AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
+from annotation.AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
 
 from domain import AuthorizationOperation
 from enumeration.InstallmentStatus import InstallmentStatus
@@ -50,6 +50,11 @@ class CreditCardService:
                 installmentResponseDtoList += self.service.installment.updateAllStatusByKeyList([installmentRequestDto.key], InstallmentStatus.ERROR)
         log.status(self.proccessAllInstalments, f'{len(installmentResponseDtoList)} {key} credit card installments processed')
         return installmentResponseDtoList
+    
+    
+    @ServiceMethod()
+    def findAll(self):
+        return self.findAllByKeyIn([])
 
 
     @ServiceMethod(requestClass=[[str]])
@@ -144,5 +149,13 @@ class CreditCardService:
 
     @AuthorizedServiceMethod(requestClass=[str], operations=[AuthorizationOperation.DELETE])
     def deleteByKey(self, key, authorizedRequest):
-        authorizedRequest = self.validator.creditCard.validateDelete(key)
+        self.validator.creditCard.validateDelete(key)
+        log.info(self.deleteByKey, f'Deleting credit card: {key}')
         self.repository.creditCard.deleteByKey(key)
+
+
+    @AuthorizedServiceMethod(requestClass=[[str]], operations=[AuthorizationOperation.DELETE])
+    def deleteAllByKeyIn(self, keyList, authorizedRequest):
+        self.validator.creditCard.validateDeleteAll(keyList)
+        log.info(self.deleteAllByKeyIn, f'Deleting credit cards: {keyList}')
+        self.repository.creditCard.deleteAllByKeyIn(keyList)
