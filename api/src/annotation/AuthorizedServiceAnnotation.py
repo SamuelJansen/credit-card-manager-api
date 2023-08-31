@@ -112,22 +112,6 @@ def getAuthorizedDomain(service, requestClass):
     return AuthorizationStaticHelper.resolveDomain(None, serviceName.replace('Service', ''))
 
 
-# def isForbiddenOperation(args, serviceMethodDomain, serviceMethodOperations):
-#     log.debugIt(args)
-#     log.debugIt(serviceMethodDomain)
-#     log.debugIt(serviceMethodOperations)
-#     requestedResourceOrRequestedResourcetList = args[1]
-#     log.debugIt(requestedResourceOrRequestedResourcetList)
-#     log.debugIt(serviceMethodOperations)
-#     log.debugIt(getRequestedResourceKeys(requestedResourceOrRequestedResourcetList, serviceMethodDomain, serviceMethodOperations))
-#     return (
-#         serviceMethodOperations in AuthorizationOperation.READDING_OPERATIONS and 
-#         ObjectHelper.isEmpty(
-#             getRequestedResourceKeys(requestedResourceOrRequestedResourcetList, serviceMethodDomain, serviceMethodOperations)
-#         )
-#     )
-
-
 def evaluateAutenticationIntegrity(requestedResourceOrRequestedResourcetList, authorizedRequest):
     # log.prettyPython(evaluateAutenticationIntegrity, 'requestedResourceOrRequestedResourcetList', Serializer.getObjectAsDictionary(requestedResource), logLevel=log.DEBUG)
     # log.prettyPython(evaluateAutenticationIntegrity, 'requestedResourceOrRequestedResourcetList', Serializer.getObjectAsDictionary(authorizedRequest), logLevel=log.DEBUG)

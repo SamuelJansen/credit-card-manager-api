@@ -113,22 +113,5 @@ def getDateTimeAsStringList(givenDateTime):
     return str(str(givenDateTime).split()[0]).split(c.DASH)
 
 
-# def getPlusMonsths(givenDay, closingDay, dueDay):
-#     log.debugIt(givenDay)
-#     log.debugIt(closingDay)
-#     log.debugIt(dueDay)
-#     log.debugIt(comparrisonDay)
-#     # if isLastMonthDay(baseDay) or isLastMonthDay(comparrisonDay):
-#     #     if isLastMonthDay(baseDay) and not isLastMonthDay(comparrisonDay):
-#     #         return 0
-#     #     elif not isLastMonthDay(baseDay) and isLastMonthDay(comparrisonDay):
-#     #         return 0
-#     if givenDay <= comparrisonDay:
-#         return 0 if givenDay <= baseDay else 1 
-#     else:
-#         return 1 
-#     # return 0 if 0 > baseDay or baseDay > givenDay else 1
-
-
 def isLastMonthDay(givenDay):
     return 0 > givenDay

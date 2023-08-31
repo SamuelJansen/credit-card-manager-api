@@ -74,12 +74,10 @@ class PurchaseService:
     @AuthorizedServiceMethod(requestClass=[[PurchaseDto.PurchaseRequestDto]], operations=[AuthorizationOperation.DELETE])
     def revertAll(self, dtoList, authorizedRequest):
         log.status(self.revertAll, f'Finding {len(dtoList)} purchases')
-        log.debugIt(Serializer.getObjectAsDictionary(dtoList))
         responseDtoList = self.findAllByQuery(PurchaseDto.PurchaseQueryAllDto(keyList=[
             dto.key
             for dto in dtoList
         ]))
-        log.debugIt(Serializer.getObjectAsDictionary(responseDtoList))
         log.status(self.revertAll, f'{len(responseDtoList)} purchases found')
         log.status(self.revertAll, f'Reverting {len(responseDtoList)} purchases')
         self.service.installment.revertAll(
