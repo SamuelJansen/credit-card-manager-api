@@ -1,5 +1,5 @@
-from python_helper import ObjectHelper
-from python_framework import Validator, ValidatorMethod, GlobalException, HttpStatus
+from python_helper import ObjectHelper, log
+from python_framework import Validator, ValidatorMethod, GlobalException, HttpStatus, Serializer
 
 from domain import AuthorizationAccount, AuthorizationAccess, AuthorizationOperation, RequestedAuthorization, AuthorizedRequest
 from helper.static import AuthorizationStaticHelper
@@ -19,15 +19,20 @@ class SecurityValidator:
             requestedAuthorization.domain,
             requestedAuthorization.operation
         )
+        self._validateArgument(requestedAuthorization, authorizationAccount, authorizedAccesses)
         self._validateWrittingOperation(requestedAuthorization, authorizationAccount, authorizedAccesses)
         self._validateReaddingOperation(requestedAuthorization, authorizationAccount, authorizedAccesses)
         authorizedResourceKeys = [
             access.resourceKey
             for access in authorizedAccesses
         ]
-        ###- if ObjectHelper.isEmpty(authorizedResourceKeys) and requestedAuthorization.operation in [AuthorizationOperation.GET, AuthorizationOperation.PUT, AuthorizationOperation.PATCH, AuthorizationOperation.DELETE]:
-        if ObjectHelper.isEmpty(authorizedResourceKeys) and requestedAuthorization.operation in [AuthorizationOperation.PUT, AuthorizationOperation.PATCH, AuthorizationOperation.DELETE]:
-            ###- if ObjectHelper.isEmpty(authorizedResourceKeys) and requestedAuthorization.operation in [AuthorizationOperation.PUT, AuthorizationOperation.PATCH, AuthorizationOperation.DELETE]:
+        ###- if ObjectHelper.isEmpty(authorizedResourceKeys) and requestedAuthorization.operation in [AuthorizationOperation.PUT, AuthorizationOperation.PATCH, AuthorizationOperation.DELETE]:
+        # For while it needs to block GET operations as well due chainned calls. 
+        # If I issue a GET CreditCard call, it will allow to GET all, 
+        # but when it comes to get the Credit (chainned call), it will have its keys and will no longger get all
+        # on top of it, as a side effect, its creatting the CreditCard keys...
+        ###- if ObjectHelper.isEmpty(authorizedResourceKeys) and requestedAuthorization.operation in [AuthorizationOperation.PUT, AuthorizationOperation.PATCH, AuthorizationOperation.DELETE]:
+        if ObjectHelper.isEmpty(authorizedResourceKeys) and requestedAuthorization.operation in [AuthorizationOperation.GET, AuthorizationOperation.PUT, AuthorizationOperation.PATCH, AuthorizationOperation.DELETE]:
             raise GlobalException(message=f'The account {authorizationAccount.key} has no access to the {requestedAuthorization.domain} resource', logMessage='Authorized resource key cannot be empty', status=HttpStatus.FORBIDDEN)
         return AuthorizedRequest.AuthorizedRequest(
             account = authorizationAccount,
@@ -35,6 +40,17 @@ class SecurityValidator:
             operation = requestedAuthorization.operation,
             resourceKeys = authorizedResourceKeys
         )
+
+
+    @ValidatorMethod(requestClass=[RequestedAuthorization.RequestedAuthorization, AuthorizationAccount.AuthorizationAccount, [AuthorizationAccess]])
+    def _validateArgument(self, requestedAuthorization, authorizationAccount, authorizedAccesses):
+        if (
+            ObjectHelper.isNone(requestedAuthorization.resourceKeys)
+        ):
+            raise GlobalException(
+                logMessage = 'Requested authorization cannot be None',
+                status = HttpStatus.BAD_REQUEST
+            )
 
 
     @ValidatorMethod(requestClass=[RequestedAuthorization.RequestedAuthorization, AuthorizationAccount.AuthorizationAccount, [AuthorizationAccess]])

@@ -10,46 +10,57 @@ def overrideDefaultValues(instance):
     instance.domain = AuthorizationStaticHelper.resolveDomain(instance, instance.domain)
 
 
-def toRequestedAuthorization(thing, domain, operation):
-    if ObjectHelper.isNone(thing):
+def toRequestedAuthorization(requestedResourceOrRequestedResourcetList, domain, operation):
+    requestedAuthorization = toUnfilteredRequestedAuthorization(requestedResourceOrRequestedResourcetList, domain, operation)
+    requestedAuthorization.resourceKeys = [key for key in requestedAuthorization.resourceKeys if ObjectHelper.isNotNone(key)]
+    return requestedAuthorization
+
+
+def toRequestedAuthorizationFromList(requestedResourceList, domain, operation):
+    requestedAuthorization = toUnfilteredRequestedAuthorizationFromList(requestedResourceList, domain, operation)
+    requestedAuthorization.resourceKeys = [key for key in requestedAuthorization.resourceKeys if ObjectHelper.isNotNone(key)]
+    return requestedAuthorization
+    
+
+
+def toUnfilteredRequestedAuthorization(requestedResourceOrRequestedResourcetList, domain, operation):
+    if ObjectHelper.isNone(requestedResourceOrRequestedResourcetList):
         return None
-    if ObjectHelper.isCollection(thing):
-        return _toRequestedAuthorizationFromList(thing, operation, domain)
-    domain = AuthorizationStaticHelper.resolveDomain(thing, domain)
-    if AuthorizationStaticHelper.isKey(thing):
+    if ObjectHelper.isCollection(requestedResourceOrRequestedResourcetList):
+        return toUnfilteredRequestedAuthorizationFromList(requestedResourceOrRequestedResourcetList, operation, domain)
+    domain = AuthorizationStaticHelper.resolveDomain(requestedResourceOrRequestedResourcetList, domain)
+    if AuthorizationStaticHelper.isKey(requestedResourceOrRequestedResourcetList):
         return RequestedAuthorization.RequestedAuthorization(
-            resourceKeys = [thing],
+            resourceKeys = [requestedResourceOrRequestedResourcetList],
             domain = domain,
             operation = operation
         )
-    if ReflectionHelper.hasAttributeOrMethod(thing, 'key'):
+    if ReflectionHelper.hasAttributeOrMethod(requestedResourceOrRequestedResourcetList, 'key'):
         return RequestedAuthorization.RequestedAuthorization(
-            resourceKeys = [] if ObjectHelper.isNone(thing.key) else [thing.key],
+            resourceKeys = [requestedResourceOrRequestedResourcetList.key],
             domain = domain,
             operation = operation
         )
     return RequestedAuthorization.RequestedAuthorization(
         resourceKeys = [
             key
-            for key in StaticConverter.getValueOrDefault(thing.keyList, [])
-            if ObjectHelper.isNotNone(key)
+            for key in StaticConverter.getValueOrDefault(requestedResourceOrRequestedResourcetList.keyList, [])
         ],
         domain = domain,
         operation = operation
     )
 
 
-def _toRequestedAuthorizationFromList(instanceList, operation, domain):
-    domain = AuthorizationStaticHelper.resolveDomain(instanceList, domain)
+def toUnfilteredRequestedAuthorizationFromList(requestedResourceList, operation, domain):
+    domain = AuthorizationStaticHelper.resolveDomain(requestedResourceList, domain)
     return RequestedAuthorization.RequestedAuthorization(
         resourceKeys = list(set(
             ObjectHelper.flatMap(
                 [
                     requestedAuthorization.resourceKeys
                     for requestedAuthorization in [
-                        toRequestedAuthorization(instance, domain, operation)
-                        for instance in instanceList
-                        if ObjectHelper.isNotNone(instance)
+                        toUnfilteredRequestedAuthorization(instance, domain, operation)
+                        for instance in requestedResourceList
                     ]
                 ]
             )

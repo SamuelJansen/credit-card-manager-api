@@ -36,5 +36,5 @@ class AuthorizationHelper:
         domainErrorLogMessage = f'Requested domain: {requestedAuthorization.domain}'
         resourceErrorLogMessage = f'Requested resources: {requestedAuthorization.resourceKeys}'
         operationErrorLogMessage = f'Requested operation: {requestedAuthorization.operation}'
-        accessesErrorLogMessage = f'Allowed accesses: {authorizedAccesses}'
+        accessesErrorLogMessage = f'Allowed accesses len: {len(authorizedAccesses)}' if 5 <= len(authorizedAccesses) else f'Allowed accesses: {authorizedAccesses}'
         return f'{accountErrorLogMessage}. {domainErrorLogMessage}. {resourceErrorLogMessage}. {operationErrorLogMessage}. {accessesErrorLogMessage}'

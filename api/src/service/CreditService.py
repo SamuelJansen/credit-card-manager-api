@@ -1,7 +1,7 @@
 from python_helper import ObjectHelper, log
 from python_framework import Service, ServiceMethod, Serializer, GlobalException, HttpStatus
 
-from annotation.AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
+from annotation.AuthorizedServiceAnnotation import AuthorizedServiceMethod
 
 from domain import AuthorizationOperation
 from enumeration.InstallmentStatus import InstallmentStatus
@@ -68,7 +68,7 @@ class CreditService:
 
     @AuthorizedServiceMethod(requestClass=[str, str], operations=[AuthorizationOperation.PATCH])
     def proccessInstalment(self, key, installmentKey, authorizedRequest):
-        log.debug(self.proccessInstalment, f'Proccesing {installmentKey} installment')
+        log.debug(self.proccessInstalment, f'Proccesing {installmentKey} credit installment')
         model = self.findAllModelByQuery(
             CreditDto.CreditQueryAllDto(
                 keyList = [key]
@@ -80,7 +80,25 @@ class CreditService:
         model.value = float(model.value) + installmentResponseDto.value
         self.saveModel(model)
         log.debug(self.proccessInstalment, f'Credit {key} value updated')
-        log.debug(self.proccessInstalment, f'Installment {installmentKey} proccessed')
+        log.debug(self.proccessInstalment, f'Credit installment {installmentKey} proccessed')
+        return self.mapper.credit.fromModelToResponseDto(model)
+    
+
+    @AuthorizedServiceMethod(requestClass=[str, str], operations=[AuthorizationOperation.PUT])
+    def revertInstalment(self, key, installmentKey, authorizedRequest):
+        log.debug(self.revertInstalment, f'Reverting {installmentKey} credit installment')
+        model = self.findAllModelByQuery(
+            CreditDto.CreditQueryAllDto(
+                keyList = [key]
+            )
+        )[0]
+        installmentResponseDto = self.service.installment.findByKey(installmentKey)
+        self.validator.credit.validateTransaction(model, (float(model.value) - installmentResponseDto.value))
+        log.debug(self.revertInstalment, f'Updating {key} credit value')
+        model.value = float(model.value) - installmentResponseDto.value
+        self.saveModel(model)
+        log.debug(self.revertInstalment, f'Credit {key} value updated')
+        log.debug(self.revertInstalment, f'Credit installment {installmentKey} reverted')
         return self.mapper.credit.fromModelToResponseDto(model)
 
 

@@ -49,3 +49,7 @@ PROCCESSABLE_STATUS = [
     InstallmentStatus.CREATED,
     InstallmentStatus.SCHEADULED
 ]
+
+REVERTABLE_STATUS = [
+    InstallmentStatus.PROCESSED
+]

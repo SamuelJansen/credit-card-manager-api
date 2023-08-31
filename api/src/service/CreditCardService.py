@@ -1,7 +1,7 @@
 from python_helper import ObjectHelper, log
 from python_framework import Service, ServiceMethod, Serializer, GlobalException, HttpStatus
 
-from annotation.AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
+from annotation.AuthorizedServiceAnnotation import AuthorizedServiceMethod
 
 from domain import AuthorizationOperation
 from enumeration.InstallmentStatus import InstallmentStatus
@@ -49,6 +49,30 @@ class CreditCardService:
                 log.error(self.proccessAllInstalments, f'Not possible to proccess installment {installmentRequestDto.key} of {key} credit card', exception=exception)
                 installmentResponseDtoList += self.service.installment.updateAllStatusByKeyList([installmentRequestDto.key], InstallmentStatus.ERROR)
         log.status(self.proccessAllInstalments, f'{len(installmentResponseDtoList)} {key} credit card installments processed')
+        return installmentResponseDtoList
+    
+
+    @AuthorizedServiceMethod(requestClass=[str, [InstallmentDto.InstallmentResponseDto]], operations=[AuthorizationOperation.PUT])
+    def revertAllInstalments(self, key, installmentRequestDtoList, authorizedRequest):
+        log.status(self.revertAllInstalments, f'Reverting {len(installmentRequestDtoList)} {key} credit card installments')
+        if 0 == len(installmentRequestDtoList):
+            raise GlobalException(message=f'Installment already reverted', status=HttpStatus.BAD_REQUEST)
+        model = self.findAllModelByQuery(
+            CreditCardDto.CreditCardQueryAllDto(
+                keyList = [key]
+            )
+        )[0]
+        installmentResponseDtoList = []
+        for installmentRequestDto in installmentRequestDtoList:
+            try:
+                creditResponseDto = self.service.credit.revertInstalment(model.creditKey, installmentRequestDto.key)
+                model.value = float(model.value) - installmentRequestDto.value
+                self.saveModel(model)
+                installmentResponseDtoList.append(installmentRequestDto)
+            except Exception as exception:
+                log.error(self.revertAllInstalments, f'Not possible to revert installment {installmentRequestDto.key} of {key} credit card', exception=exception)
+                installmentResponseDtoList += self.service.installment.updateAllStatusByKeyList([installmentRequestDto.key], InstallmentStatus.ERROR)
+        log.status(self.revertAllInstalments, f'{len(installmentResponseDtoList)} {key} credit card installments reverted')
         return installmentResponseDtoList
     
     

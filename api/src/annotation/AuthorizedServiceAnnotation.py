@@ -60,15 +60,15 @@ def handleAuthorizationAndUpdateArgsBeforeServiceMethodExecution(args, serviceMe
     if 1 >= len(args):
         raise Exception('Bad implementation of @AuthorizedServiceMethod. The resource cannot be None')
     resourceInstance = args[0]
-    requestedResource = args[1]
+    requestedResourceOrRequestedResourcetList = args[1]
     authorizedRequest = resourceInstance.validator.security.validateAuthorization(
-        AuthorizationStaticConverter.toRequestedAuthorization(
-            requestedResource,
+        AuthorizationStaticConverter.toUnfilteredRequestedAuthorization(
+            requestedResourceOrRequestedResourcetList,
             serviceMethodDomain,
             serviceMethodOperations
         )
     )
-    evaluateAutenticationIntegrity(requestedResource, authorizedRequest)
+    evaluateAutenticationIntegrity(requestedResourceOrRequestedResourcetList, authorizedRequest)
     return [
         *args,
         authorizedRequest
@@ -77,26 +77,32 @@ def handleAuthorizationAndUpdateArgsBeforeServiceMethodExecution(args, serviceMe
 
 def createOrUpdateAccessesAfterExceutedServiceMethod(args, serviceMethodDomain, serviceMethodOperations, methodReturn):
     resourceInstance = args[0]
-    requestedResource = args[1]
+    requestedResourceOrRequestedResourcetList = args[1]
     resourceInstance.service.security.createOrUpdateOrDeleteAccesses(
-        getResourceKeys(args, serviceMethodDomain, serviceMethodOperations, methodReturn),
+        getProccessedResourceKeys(requestedResourceOrRequestedResourcetList, serviceMethodDomain, serviceMethodOperations, methodReturn),
         serviceMethodDomain,
         serviceMethodOperations
     )
 
 
-def getResourceKeys(args, serviceMethodDomain, serviceMethodOperations, methodReturn):
+def getProccessedResourceKeys(requestedResourceOrRequestedResourcetList, serviceMethodDomain, serviceMethodOperations, methodReturn):
     if ObjectHelper.isNotNone(methodReturn):
         if ObjectHelper.isNotTuple(methodReturn):
             return AuthorizationStaticConverter.toRequestedAuthorization(methodReturn, serviceMethodDomain, serviceMethodOperations).resourceKeys
         return AuthorizationStaticConverter.toRequestedAuthorization(methodReturn[0], serviceMethodDomain, serviceMethodOperations).resourceKeys
-    return AuthorizationStaticConverter.toRequestedAuthorization(args[1], serviceMethodDomain, serviceMethodOperations).resourceKeys
+    return getRequestedResourceKeys(requestedResourceOrRequestedResourcetList, serviceMethodDomain, serviceMethodOperations)
+
+
+def getRequestedResourceKeys(requestedResourceOrRequestedResourcetList, serviceMethodDomain, serviceMethodOperations):
+    return AuthorizationStaticConverter.toRequestedAuthorization(requestedResourceOrRequestedResourcetList, serviceMethodDomain, serviceMethodOperations).resourceKeys
 
 
 def getAuthorizedOperations(operations):
+    if ObjectHelper.isNotCollection(operations):
+        raise Exception(f'Bad implementation of @AuthorizedServiceMethod. The operations=[] parameter should be a collection: {ReflectionHelper.getClassName(operations)}')
     if ObjectHelper.isEmpty(operations):
         raise Exception('Bad implementation of @AuthorizedServiceMethod. The operations=[] parameter cannot be empty')
-    if ObjectHelper.isEmpty(operations):
+    if ObjectHelper.notEquals(1, len(operations)):
         raise Exception('Missing implementation of @AuthorizedServiceMethod. The operations=[] parameter can only have one argument for the moment')
     return operations[0]
 
@@ -106,7 +112,23 @@ def getAuthorizedDomain(service, requestClass):
     return AuthorizationStaticHelper.resolveDomain(None, serviceName.replace('Service', ''))
 
 
-def evaluateAutenticationIntegrity(requestedResource, authorizedRequest):
-    # log.prettyPython(evaluateAutenticationIntegrity, 'requestedResource', Serializer.getObjectAsDictionary(requestedResource), logLevel=log.DEBUG)
-    # log.prettyPython(evaluateAutenticationIntegrity, 'authorizedRequest', Serializer.getObjectAsDictionary(authorizedRequest), logLevel=log.DEBUG)
+# def isForbiddenOperation(args, serviceMethodDomain, serviceMethodOperations):
+#     log.debugIt(args)
+#     log.debugIt(serviceMethodDomain)
+#     log.debugIt(serviceMethodOperations)
+#     requestedResourceOrRequestedResourcetList = args[1]
+#     log.debugIt(requestedResourceOrRequestedResourcetList)
+#     log.debugIt(serviceMethodOperations)
+#     log.debugIt(getRequestedResourceKeys(requestedResourceOrRequestedResourcetList, serviceMethodDomain, serviceMethodOperations))
+#     return (
+#         serviceMethodOperations in AuthorizationOperation.READDING_OPERATIONS and 
+#         ObjectHelper.isEmpty(
+#             getRequestedResourceKeys(requestedResourceOrRequestedResourcetList, serviceMethodDomain, serviceMethodOperations)
+#         )
+#     )
+
+
+def evaluateAutenticationIntegrity(requestedResourceOrRequestedResourcetList, authorizedRequest):
+    # log.prettyPython(evaluateAutenticationIntegrity, 'requestedResourceOrRequestedResourcetList', Serializer.getObjectAsDictionary(requestedResource), logLevel=log.DEBUG)
+    # log.prettyPython(evaluateAutenticationIntegrity, 'requestedResourceOrRequestedResourcetList', Serializer.getObjectAsDictionary(authorizedRequest), logLevel=log.DEBUG)
     ...

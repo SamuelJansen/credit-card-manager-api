@@ -1,7 +1,7 @@
 from python_helper import ObjectHelper, log
 from python_framework import Service, ServiceMethod, Serializer, HttpStatus, GlobalException
 
-from annotation.AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
+from annotation.AuthorizedServiceAnnotation import AuthorizedServiceMethod
 
 from domain import AuthorizationOperation
 from dto import PurchaseDto, InstallmentDto
@@ -69,6 +69,30 @@ class PurchaseService:
         )
         log.status(self.createAll, f'{len(responseDtoList)} purchases processed')
         return responseDtoList
+    
+
+    @AuthorizedServiceMethod(requestClass=[[PurchaseDto.PurchaseRequestDto]], operations=[AuthorizationOperation.DELETE])
+    def revertAll(self, dtoList, authorizedRequest):
+        log.status(self.revertAll, f'Finding {len(dtoList)} purchases')
+        log.debugIt(Serializer.getObjectAsDictionary(dtoList))
+        responseDtoList = self.findAllByQuery(PurchaseDto.PurchaseQueryAllDto(keyList=[
+            dto.key
+            for dto in dtoList
+        ]))
+        log.debugIt(Serializer.getObjectAsDictionary(responseDtoList))
+        log.status(self.revertAll, f'{len(responseDtoList)} purchases found')
+        log.status(self.revertAll, f'Reverting {len(responseDtoList)} purchases')
+        self.service.installment.revertAll(
+            InstallmentDto.InstallmentQueryAllDto(
+                keyList = [
+                    installmentResponseDto.key
+                    for responseDto in responseDtoList
+                    for installmentResponseDto in responseDto.installmentList
+                ]
+            )
+        )
+        log.status(self.revertAll, f'{len(responseDtoList)} purchases reverted')
+        return []
 
 
     @AuthorizedServiceMethod(requestClass=[PurchaseDto.PurchaseRequestDto], operations=[AuthorizationOperation.POST])

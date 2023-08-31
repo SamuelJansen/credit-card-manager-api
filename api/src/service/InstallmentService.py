@@ -1,7 +1,7 @@
 from python_helper import ObjectHelper, log
 from python_framework import Service, ServiceMethod, Serializer, StaticConverter, EnumItem, GlobalException, HttpStatus
 
-from annotation.AuthorizedServiceMethodAnnotation import AuthorizedServiceMethod
+from annotation.AuthorizedServiceAnnotation import AuthorizedServiceMethod
 
 from constant import InstallmentConstant
 from domain import AuthorizationOperation
@@ -52,7 +52,19 @@ class InstallmentService:
             model.purchaseKey
             for model in modelList
         ])
-        ###- sorted(modelList, key=lambda x: x.installmentAt, reverse=True)
+        return self.mapper.installment.toResponseDtoList(modelList, purchaseResponseDtoList)
+
+
+    @ServiceMethod(requestClass=[InstallmentDto.InstallmentQueryAllDto])
+    def findAllRevertableByQuery(self, queryDto):
+        self.converter.installment.overrideRevertableQueryDto(queryDto)
+        modelList = self.findAllModelByQuery(queryDto)
+        if 0 == len(modelList):
+            raise GlobalException(message=f'Installments {queryDto.keyList} already processed', status=HttpStatus.BAD_REQUEST)
+        purchaseResponseDtoList = self.service.purchase.findAllByKeyIn([
+            model.purchaseKey
+            for model in modelList
+        ])
         return self.mapper.installment.toResponseDtoList(modelList, purchaseResponseDtoList)
 
 
@@ -71,7 +83,7 @@ class InstallmentService:
                 k not in InstallmentConstant.CREDIT_CARD_QUERY_KEY_LIST
             )
         }
-        fromDateTime =  StaticConverter.getValueOrDefault(query.get(InstallmentConstant.FROM_DATE_TIME_QUERY_KEY), InstallmentConstant.MIN_START_DATE_TIME)
+        fromDateTime = StaticConverter.getValueOrDefault(query.get(InstallmentConstant.FROM_DATE_TIME_QUERY_KEY), InstallmentConstant.MIN_START_DATE_TIME)
         toDateTime = StaticConverter.getValueOrDefault(query.get(InstallmentConstant.TO_DATE_TIME_QUERY_KEY), InstallmentConstant.MAX_END_DATE_TIME)
         return self.repository.installment.findAllByQueryWithinInstallmentDatesAndCreditCardKeyIn(filteredQuery, fromDateTime, toDateTime, queryDto.creditCardKeyList)
 
@@ -140,6 +152,68 @@ class InstallmentService:
                     InstallmentStatus.ERROR
                 )
         log.status(self.proccessAll, f'{len(responseDtoList)} installments processed')
+        return responseDtoList
+
+
+    @AuthorizedServiceMethod(requestClass=[InstallmentDto.InstallmentQueryAllDto], operations=[AuthorizationOperation.DELETE])
+    def revertAll(self, queryDto, authorizedRequest):
+        log.status(self.revertAll, f'Reverting {len(queryDto.keyList)} installments')
+        installmentResponseDtoList = self.findAllRevertableByQuery(queryDto)
+        self.updateAllStatusByKeyList(
+            [
+                installmentResponseDto.key
+                for installmentResponseDto in installmentResponseDtoList
+            ],
+            InstallmentStatus.REVERTING
+        )
+        creditCardResponseDtoList = self.service.creditCard.findAllByKeyIn(
+            list(set([
+                installmentResponseDto.purchase.creditCardKey
+                for installmentResponseDto in installmentResponseDtoList
+            ]))
+        )
+        responseDtoList = []
+        for creditCardResponseDto in creditCardResponseDtoList:
+            toRevertInstallmentKeyList = [
+                installmentResponseDto.key
+                for installmentResponseDto in installmentResponseDtoList
+                if creditCardResponseDto.key == installmentResponseDto.purchase.creditCardKey
+            ]
+            toRevertInstallmentDtoList = self.service.installment.findAllByKeyIn(toRevertInstallmentKeyList)
+            try:
+                creditCardInstallmentRevertedList = self.service.creditCard.revertAllInstalments(
+                    creditCardResponseDto.key,
+                    toRevertInstallmentDtoList
+                )
+                processingInstallmentKeyList = [
+                    creditCardInstallmentRevertedDto.key
+                    for creditCardInstallmentRevertedDto in creditCardInstallmentRevertedList
+                    if InstallmentStatus.REVERTING == creditCardInstallmentRevertedDto.status
+                ]
+                if 0 < len(processingInstallmentKeyList):
+                    responseDtoList += self.updateAllStatusByKeyList(
+                        processingInstallmentKeyList,
+                        InstallmentStatus.REVERTED
+                    )
+                if len(toRevertInstallmentDtoList) > len(processingInstallmentKeyList):
+                    responseDtoList += self.updateAllStatusByKeyList(
+                        [
+                            creditCardInstallmentRevertedDto.key
+                            for creditCardInstallmentRevertedDto in creditCardInstallmentRevertedList
+                            if creditCardInstallmentRevertedDto.key in toRevertInstallmentKeyList and not InstallmentStatus.REVERTING == creditCardInstallmentRevertedDto.status
+                        ],
+                        InstallmentStatus.ERROR
+                    )
+            except Exception as exception:
+                log.error(self.revertAll, f'Not possible to revert installments {queryDto.keyList}', exception=exception)
+                responseDtoList += self.updateAllStatusByKeyList(
+                    [
+                        toRevertInstallmentDto.key
+                        for toRevertInstallmentDto in toRevertInstallmentDtoList
+                    ],
+                    InstallmentStatus.ERROR
+                )
+        log.status(self.revertAll, f'{len(responseDtoList)} installments reverted')
         return responseDtoList
 
 

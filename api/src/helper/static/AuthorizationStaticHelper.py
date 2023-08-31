@@ -53,6 +53,7 @@ def isForbiddenCondition(operation, requestedResourceKey, authorizedResourceKeys
             )
         if operation in AuthorizationOperation.UPDATE_OPERATIONS:
             return (
+                ObjectHelper.isNone(requestedResourceKey) or
                 requestedResourceKey not in authorizedResourceKeys
             )
     elif operation in AuthorizationOperation.READDING_OPERATIONS:

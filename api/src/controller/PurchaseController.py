@@ -45,3 +45,12 @@ class PurchaseAllController:
     )
     def post(self, dtoList):
         return self.service.purchase.createAll(dtoList), HttpStatus.CREATED
+
+
+    @ControllerMethod(url = '/all',
+        roleRequired=[SecurityContext.ADMIN, SecurityContext.PURCHASE_ADMIN, SecurityContext.USER, SecurityContext.PURCHASE_USER],
+        requestClass=[[PurchaseDto.PurchaseRequestDto]],
+        responseClass=[[PurchaseDto.PurchaseResponseDto]]
+    )
+    def delete(self, dtoList):
+        return self.service.purchase.revertAll(dtoList), HttpStatus.ACCEPTED

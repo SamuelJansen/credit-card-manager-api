@@ -7,6 +7,7 @@ class InstallmentStatusEnumeration:
     SCHEADULED = EnumItem()
     PROCESSING = EnumItem()
     PROCESSED = EnumItem()
+    REVERTING = EnumItem()
     REVERTED = EnumItem()
     ERROR = EnumItem()
     NONE = EnumItem()

@@ -30,19 +30,19 @@ class InstallmentHelper:
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getCurrentClosingDateTime(self, purchaseAt, creditCardResponseDto):
-        return IntervalStaticHelper.getCurrentClosingDateTime(purchaseAt, creditCardResponseDto.closingDay, creditCardResponseDto.closingDay)
+        return IntervalStaticHelper.getCurrentClosingDateTime(purchaseAt, creditCardResponseDto.closingDay)
 
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getNextClosingDateTime(self, purchaseAt, creditCardResponseDto):
-        return IntervalStaticHelper.getNextClosingDateTime(purchaseAt, creditCardResponseDto.closingDay, creditCardResponseDto.closingDay)
+        return IntervalStaticHelper.getNextClosingDateTime(purchaseAt, creditCardResponseDto.closingDay)
 
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getCurrentDueDateTime(self, purchaseAt, creditCardResponseDto):
-        return IntervalStaticHelper.getCurrentDueDateTime(purchaseAt, creditCardResponseDto.dueDay, creditCardResponseDto.closingDay)
+        return IntervalStaticHelper.getCurrentDueDateTime(purchaseAt, creditCardResponseDto.closingDay, creditCardResponseDto.dueDay)
 
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getNextDueDateTime(self, purchaseAt, creditCardResponseDto):
-        return IntervalStaticHelper.getNextDueDateTime(purchaseAt, creditCardResponseDto.dueDay, creditCardResponseDto.closingDay)
+        return IntervalStaticHelper.getNextDueDateTime(purchaseAt, creditCardResponseDto.closingDay, creditCardResponseDto.dueDay)

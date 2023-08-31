@@ -30,3 +30,9 @@ class InstallmentConverter:
         queryDto.statusList = [
             *InstallmentConstant.PROCCESSABLE_STATUS
         ]
+
+    @ConverterMethod(requestClass=[InstallmentDto.InstallmentQueryAllDto])
+    def overrideRevertableQueryDto(self, queryDto):
+        queryDto.statusList = [
+            *InstallmentConstant.REVERTABLE_STATUS
+        ]

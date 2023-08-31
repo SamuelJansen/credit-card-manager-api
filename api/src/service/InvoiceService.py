@@ -21,10 +21,8 @@ class InvoiceService:
         for creditCardResponseDto in creditCardResponseDtoList:
             dueDateTime = self.helper.invoice.getCurrentDueDateTime(DateTimeHelper.of(date=queryDto.date), creditCardResponseDto)
             dueDate = DateTimeHelper.dateOf(dateTime=dueDateTime)
-            dueDateDay = dueDate.day
             closingDateTime = self.helper.invoice.getCurrentClosingDateTime(DateTimeHelper.of(date=queryDto.date), creditCardResponseDto)
             closingDate = DateTimeHelper.dateOf(dateTime=closingDateTime)
-            closingDateDay = closingDate.day
             fromDateTimeRefference = closingDateTime if queryDto.date > dueDate else DateTimeHelper.minusMonths(closingDateTime, months=1)
             toDateTimeRefference = DateTimeHelper.plusMonths(fromDateTimeRefference, months=1)
             installmentResponseDtoList = self.service.installment.findAllByQuery(
@@ -36,9 +34,6 @@ class InvoiceService:
                     toDateTime = f'{DateTimeHelper.dateOf(dateTime=toDateTimeRefference)} {DateTimeHelper.DEFAULT_TIME_END}'
                 )
             )
-            toYearMonthList = f'{DateTimeHelper.dateOf(dateTime=toDateTimeRefference)}'.split('-')[:-1]
-            closeAt = f'{toYearMonthList[0]}-{toYearMonthList[1]}-{closingDateDay:02}'
-            dueAt = f'{toYearMonthList[0]}-{toYearMonthList[1]}-{dueDateDay:02}'
             invoiceResponseDtoList.append(
                 InvoiceDto.InvoiceResponseDto(
                     key = creditCardResponseDto.key,
@@ -54,8 +49,8 @@ class InvoiceService:
                     ),
                     installmentList = sorted(installmentResponseDtoList, key=lambda x: x.installmentAt, reverse=True),
                     creditCard = creditCardResponseDto,
-                    closeAt = closeAt,
-                    dueAt = dueAt
+                    closeAt = closingDate, ###- closeAt
+                    dueAt =  dueDate ###- dueAt
                 )
             )
         self.service.security.unlockTransaction(transactionKey)

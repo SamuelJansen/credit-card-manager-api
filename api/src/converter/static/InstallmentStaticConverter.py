@@ -18,8 +18,9 @@ def overrideDefaultValues(instance, objectKeys=None):
 def overrideDefaultQueryValues(instance, objectKeys=None):
     if ObjectHelper.isNone(instance):
         return instance
-    objectKeys = StaticConverter.getValueOrDefault(objectKeys, ReflectionHelper.getAttributeNameListFromInstance(instance))
-    # overrideDefaultValues(instance, objectKeys=objectKeys)
-    if 'keyList' in objectKeys:
+    instanceKeys = StaticConverter.getValueOrDefault(objectKeys, ReflectionHelper.getAttributeNameListFromInstance(instance))
+    if 'keyList' in instanceKeys:
         instance.keyList = StaticConverter.getValueOrDefault(instance.keyList, [])
+    if 'statusList' in instanceKeys:
+        instance.statusList = StaticConverter.getValueOrDefault(instance.statusList, [])
     return instance
