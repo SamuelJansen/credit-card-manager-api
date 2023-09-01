@@ -3,8 +3,8 @@ from python_helper import Constant as c
 from python_helper import DateTimeHelper
 from python_framework import Helper, HelperMethod
 
-from constant import InstallmentConstant
-from helper.static import MathStaticHelper, IntervalStaticHelper
+from constant import IntervalConstant
+from helper.static import IntervalStaticHelper
 from dto import CreditCardDto, PurchaseDto
 
 
@@ -30,19 +30,19 @@ class InstallmentHelper:
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getCurrentClosingDateTime(self, purchaseAt, creditCardResponseDto):
-        return IntervalStaticHelper.getCurrentClosingDateTime(purchaseAt, creditCardResponseDto.closingDay)
+        return IntervalStaticHelper.getCurrentClosingDateTime(purchaseAt, creditCardResponseDto.closingDay, creditCardResponseDto.dueDay, IntervalConstant.CLOSING_DAY_REFERENCE)
 
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getNextClosingDateTime(self, purchaseAt, creditCardResponseDto):
-        return IntervalStaticHelper.getNextClosingDateTime(purchaseAt, creditCardResponseDto.closingDay)
+        return IntervalStaticHelper.getNextClosingDateTime(purchaseAt, creditCardResponseDto.closingDay, creditCardResponseDto.dueDay, IntervalConstant.CLOSING_DAY_REFERENCE)
 
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getCurrentDueDateTime(self, purchaseAt, creditCardResponseDto):
-        return IntervalStaticHelper.getCurrentDueDateTime(purchaseAt, creditCardResponseDto.closingDay, creditCardResponseDto.dueDay)
+        return IntervalStaticHelper.getCurrentDueDateTime(purchaseAt, creditCardResponseDto.closingDay, creditCardResponseDto.dueDay, IntervalConstant.CLOSING_DAY_REFERENCE)
 
 
     @HelperMethod(requestClass=[datetime.datetime, CreditCardDto.CreditCardResponseDto])
     def getNextDueDateTime(self, purchaseAt, creditCardResponseDto):
-        return IntervalStaticHelper.getNextDueDateTime(purchaseAt, creditCardResponseDto.closingDay, creditCardResponseDto.dueDay)
+        return IntervalStaticHelper.getNextDueDateTime(purchaseAt, creditCardResponseDto.closingDay, creditCardResponseDto.dueDay, IntervalConstant.CLOSING_DAY_REFERENCE)

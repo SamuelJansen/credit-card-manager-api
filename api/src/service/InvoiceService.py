@@ -2,7 +2,7 @@ from python_framework import Service, ServiceMethod, Serializer, StaticConverter
 from python_helper import ObjectHelper, DateTimeHelper, log
 
 from constant import InvoiceConstant
-from helper.static import MathStaticHelper
+from helper.static import MathStaticHelper, IntervalStaticHelper
 from dto import InvoiceDto, InstallmentDto, CreditCardDto
 
 
@@ -23,8 +23,8 @@ class InvoiceService:
             dueDate = DateTimeHelper.dateOf(dateTime=dueDateTime)
             closingDateTime = self.helper.invoice.getCurrentClosingDateTime(DateTimeHelper.of(date=queryDto.date), creditCardResponseDto)
             closingDate = DateTimeHelper.dateOf(dateTime=closingDateTime)
-            fromDateTimeRefference = closingDateTime if queryDto.date > dueDate else DateTimeHelper.minusMonths(closingDateTime, months=1)
-            toDateTimeRefference = DateTimeHelper.plusMonths(fromDateTimeRefference, months=1)
+            fromDateTimeRefference = closingDateTime if queryDto.date > dueDate else IntervalStaticHelper.previousMonth(closingDateTime)
+            toDateTimeRefference = IntervalStaticHelper.nextMonth(fromDateTimeRefference)
             installmentResponseDtoList = self.service.installment.findAllByQuery(
                 InstallmentDto.InstallmentQueryAllDto(
                     creditCardKeyList = [
