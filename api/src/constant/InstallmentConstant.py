@@ -53,3 +53,5 @@ PROCCESSABLE_STATUS = [
 REVERTABLE_STATUS = [
     InstallmentStatus.PROCESSED
 ]
+
+SORTTING_ATTRIBUTE = 'installmentAt'

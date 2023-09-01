@@ -117,7 +117,7 @@ class InstallmentService:
                 for installmentResponseDto in installmentResponseDtoList
                 if creditCardResponseDto.key == installmentResponseDto.purchase.creditCardKey
             ]
-            toProccessInstallmentDtoList = self.service.installment.findAllByKeyIn(toProccessInstallmentKeyList)
+            toProccessInstallmentDtoList = ObjectHelper.sortIt(self.service.installment.findAllByKeyIn(toProccessInstallmentKeyList), byAttribute=InstallmentConstant.SORTTING_ATTRIBUTE)
             try:
                 creditCardInstallmentProcessedList = self.service.creditCard.proccessAllInstalments(
                     creditCardResponseDto.key,

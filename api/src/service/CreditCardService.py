@@ -5,9 +5,9 @@ from annotation.AuthorizedServiceAnnotation import AuthorizedServiceMethod
 
 from domain import AuthorizationOperation
 from enumeration.InstallmentStatus import InstallmentStatus
+from constant import InstallmentConstant
 from dto import CreditCardDto, InstallmentDto
 from model import CreditCard
-from helper.static import MathStaticHelper
 
 
 @Service()
@@ -39,7 +39,7 @@ class CreditCardService:
             )
         )[0]
         installmentResponseDtoList = []
-        for installmentRequestDto in installmentRequestDtoList:
+        for installmentRequestDto in ObjectHelper.sortIt(installmentRequestDtoList, byAttribute=InstallmentConstant.SORTTING_ATTRIBUTE):
             try:
                 creditResponseDto = self.service.credit.proccessInstalment(model.creditKey, installmentRequestDto.key)
                 model.value = float(model.value) + installmentRequestDto.value

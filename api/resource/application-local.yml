@@ -3,6 +3,8 @@ print-status: False
 api:
     server:
         scheme: http
+        # base-url: /dell-development
+        # port: 5000
     database:
         dialect: ${DATABASE_DIALECT:sqlite}
         settings:

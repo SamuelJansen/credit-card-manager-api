@@ -4,6 +4,7 @@ from python_framework import Service, ServiceMethod, Serializer, HttpStatus, Glo
 from annotation.AuthorizedServiceAnnotation import AuthorizedServiceMethod
 
 from domain import AuthorizationOperation
+from constant import InstallmentConstant, PurchaseConstant
 from dto import PurchaseDto, InstallmentDto
 from model import Purchase
 from helper.static import MathStaticHelper
@@ -52,10 +53,14 @@ class PurchaseService:
     @AuthorizedServiceMethod(requestClass=[[PurchaseDto.PurchaseRequestDto]], operations=[AuthorizationOperation.POST])
     def createAll(self, dtoList, authorizedRequest):
         log.status(self.createAll, f'Creating {len(dtoList)} purchases')
-        responseDtoList = [
-            self.internalCreate(dto)
-            for dto in dtoList
-        ]
+        responseDtoList = ObjectHelper.sortIt(
+            [
+                self.internalCreate(dto)
+                for dto in ObjectHelper.sortIt(dtoList, byAttribute=PurchaseConstant.SORTTING_ATTRIBUTE)
+            ],
+            byAttribute=PurchaseConstant.SORTTING_ATTRIBUTE
+        )
+        InstallmentDto.InstallmentResponseDto
         log.status(self.createAll, f'{len(responseDtoList)} purchases created')
         log.status(self.createAll, f'Processing {len(responseDtoList)} purchases')
         self.service.installment.proccessAll(
@@ -63,7 +68,7 @@ class PurchaseService:
                 keyList = [
                     installmentResponseDto.key
                     for responseDto in responseDtoList
-                    for installmentResponseDto in responseDto.installmentList
+                    for installmentResponseDto in ObjectHelper.sortIt(responseDto.installmentList, byAttribute=InstallmentConstant.SORTTING_ATTRIBUTE)
                 ]
             )
         )
@@ -74,10 +79,13 @@ class PurchaseService:
     @AuthorizedServiceMethod(requestClass=[[PurchaseDto.PurchaseRequestDto]], operations=[AuthorizationOperation.DELETE])
     def revertAll(self, dtoList, authorizedRequest):
         log.status(self.revertAll, f'Finding {len(dtoList)} purchases')
-        responseDtoList = self.findAllByQuery(PurchaseDto.PurchaseQueryAllDto(keyList=[
-            dto.key
-            for dto in dtoList
-        ]))
+        responseDtoList = ObjectHelper.sortIt(
+            self.findAllByQuery(PurchaseDto.PurchaseQueryAllDto(keyList=[
+                dto.key
+                for dto in ObjectHelper.sortIt(dtoList, byAttribute=PurchaseConstant.SORTTING_ATTRIBUTE)
+            ])),
+            byAttribute=PurchaseConstant.SORTTING_ATTRIBUTE
+        )
         log.status(self.revertAll, f'{len(responseDtoList)} purchases found')
         log.status(self.revertAll, f'Reverting {len(responseDtoList)} purchases')
         self.service.installment.revertAll(
@@ -85,7 +93,7 @@ class PurchaseService:
                 keyList = [
                     installmentResponseDto.key
                     for responseDto in responseDtoList
-                    for installmentResponseDto in responseDto.installmentList
+                    for installmentResponseDto in ObjectHelper.sortIt(responseDto.installmentList, byAttribute=InstallmentConstant.SORTTING_ATTRIBUTE)
                 ]
             )
         )
