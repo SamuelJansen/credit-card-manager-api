@@ -1,6 +1,7 @@
 from python_framework import Service, ServiceMethod, Serializer, StaticConverter
 from python_helper import ObjectHelper, DateTimeHelper, log
 
+from enumeration.InstallmentStatus import InstallmentStatus
 from constant import InvoiceConstant
 from helper.static import MathStaticHelper, IntervalStaticHelper
 from dto import InvoiceDto, InstallmentDto, CreditCardDto
@@ -31,7 +32,8 @@ class InvoiceService:
                         creditCardResponseDto.key
                     ],
                     fromDateTime = f'{DateTimeHelper.dateOf(dateTime=DateTimeHelper.plusDays(fromDateTimeRefference, days=1))} {DateTimeHelper.DEFAULT_TIME_BEGIN}',
-                    toDateTime = f'{DateTimeHelper.dateOf(dateTime=toDateTimeRefference)} {DateTimeHelper.DEFAULT_TIME_END}'
+                    toDateTime = f'{DateTimeHelper.dateOf(dateTime=toDateTimeRefference)} {DateTimeHelper.DEFAULT_TIME_END}',
+                    statusList = [InstallmentStatus.PROCESSED]
                 )
             )
             invoiceResponseDtoList.append(

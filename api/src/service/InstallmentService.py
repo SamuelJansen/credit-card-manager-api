@@ -60,7 +60,7 @@ class InstallmentService:
         self.converter.installment.overrideRevertableQueryDto(queryDto)
         modelList = self.findAllModelByQuery(queryDto)
         if 0 == len(modelList):
-            raise GlobalException(message=f'Installments {queryDto.keyList} already processed', status=HttpStatus.BAD_REQUEST)
+            raise GlobalException(message=f'Installments {queryDto.keyList} already reverted', status=HttpStatus.BAD_REQUEST)
         purchaseResponseDtoList = self.service.purchase.findAllByKeyIn([
             model.purchaseKey
             for model in modelList
