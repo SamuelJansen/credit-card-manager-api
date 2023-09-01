@@ -18,7 +18,8 @@ class PurchaseResourceShareController:
         responseClass=[[AuthorizationAccessShareDto.AuthorizationAccessShareAllRequestDto]]
     )
     def post(self, dtoList):
-        self.service.resource.shareAllPurchase(dtoList)
+        # self.service.resource.shareAllPurchase(dtoList)
+        self.service.resource.transferAllPurchase(dtoList)
         return [], HttpStatus.CREATED
 
     @ControllerMethod(url = '/all',

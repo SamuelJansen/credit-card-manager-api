@@ -34,6 +34,11 @@ class SecurityService:
         authorizationAccount.accesses = self.getAccessesByAccount(authorizationAccount)
         ###- log.prettyJson(self.getAuthorizationAccount, 'Authorization account', Serializer.getObjectAsDictionary(authorizationAccount), logLevel=log.DEBUG)
         return authorizationAccount
+    
+    
+    @ServiceMethod()
+    def getAuthorizationAccountKey(self):
+        return AuditoryUtil.safellyGetCurrentAthentication(securityClass=AuthorizationAccount.AuthorizationAccount, service=self).key
 
 
     @ServiceMethod(requestClass=[AuthorizationAccount.AuthorizationAccount])

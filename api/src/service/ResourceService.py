@@ -63,3 +63,34 @@ class ResourceService:
                 for operation in dto.operationList:
                     self.service.security.shareResource(purchaseResponseDto.key, 'Purchase', operation, dto.accountKey, authorizationAccount)
         self.service.security.unlockTransaction(transactionKey)
+
+
+    @ServiceMethod(requestClass=[[AuthorizationAccessShareDto.AuthorizationAccessShareAllRequestDto]])
+    def transferAllPurchase(self, dtoList, shareRelatedDomains=True):
+        transactionKey = self.service.security.lockTransaction()
+        authorizationAccount = self.service.security.getAuthorizationAccount()
+        for dto in dtoList:
+            purchaseResponseDtoList = self.service.purchase.findAllByQuery(PurchaseDto.PurchaseQueryAllDto(keyList = dto.resourceKeyList))
+            if shareRelatedDomains:
+                for creditCardKey in list(set([purchaseResponseDto.creditCardKey for purchaseResponseDto in purchaseResponseDtoList])):
+                    self.shareAllCreditCard(
+                        [
+                            AuthorizationAccessShareDto.AuthorizationAccessShareRequestDto(
+                                resourceKey = creditCardKey,
+                                domain = dto.domain,
+                                operation = operation,
+                                accountKey = dto.accountKey
+                            )
+                            for operation in dto.operationList
+                        ], 
+                        shareRelatedDomains = False
+                    )
+            for purchaseResponseDto in purchaseResponseDtoList:
+                for installmentResponseDto in purchaseResponseDto.installmentList:
+                    for operation in dto.operationList:
+                        self.service.security.shareResource(installmentResponseDto.key, 'Installment', operation, dto.accountKey, authorizationAccount)
+                self.service.security.revokeResourceAccess(installmentResponseDto.key, authorizationAccount.key, authorizationAccount)
+                for operation in dto.operationList:
+                    self.service.security.shareResource(purchaseResponseDto.key, 'Purchase', operation, dto.accountKey, authorizationAccount)
+                self.service.security.revokeResourceAccess(purchaseResponseDto.key, authorizationAccount.key, authorizationAccount)
+        self.service.security.unlockTransaction(transactionKey)

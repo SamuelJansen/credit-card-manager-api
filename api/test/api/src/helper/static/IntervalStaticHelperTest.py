@@ -1369,6 +1369,27 @@ def getCurrentClosingDateTime_when_dueDay_reference_2023_09_01_closingDay_31_due
     assert ObjectHelper.equals(expected, toAssert), f'{expected} == {toAssert}'
 
 
+@Test(
+    environmentVariables={
+        log.ENABLE_LOGS_WITH_COLORS : True
+    },
+    **TEST_SETTINGS
+)
+def getCurrentClosingDateTime_when_dueDay_reference_2023_09_01_h0701_closingDay_31_dueDay_15():
+    #arrange
+    closingDay = -1 
+    dueDay = 15
+    reference = IntervalConstant.DUE_DAY_REFERENCE
+    dateTime = DateTimeHelper.of('2023-09-01 07:01:00.000')
+    expected = DateTimeHelper.of(f'''2023-08-31 {DateTimeHelper.DEFAULT_TIME_END}''')
+
+    #act
+    toAssert = IntervalStaticHelper.getCurrentClosingDateTime(dateTime, closingDay, dueDay, reference)
+
+    #assert
+    assert ObjectHelper.equals(expected, toAssert), f'{expected} == {toAssert}'
+
+
 #################################################################
 ###- current due - 2023-09-01 closingDay_31_dueDay_15 CLOSING_DAY_REFERENCE
 #################################################################
