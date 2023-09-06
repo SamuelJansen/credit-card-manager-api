@@ -24,8 +24,8 @@ class CreditCardController:
     url = '/credit-card',
     tag = 'Credit Card',
     description = 'Credit Card controller'
-    , logRequest = True
-    , logResponse = True
+    # , logRequest = True
+    # , logResponse = True
 )
 class CreditCardAllController:
 
