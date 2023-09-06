@@ -4,21 +4,21 @@ from domain.SecurityContext import SecurityContext
 from dto import AuthorizationAccessDto
 
 @Controller(
-    url = '/resource/share/purchase',
+    url = '/resource/transfer/credit-card',
     tag = 'Resource',
     description = 'Resource controller'
     # , logRequest = True
     # , logResponse = True
 )
-class PurchaseResourceShareController:
+class CreditCardResourceTransferController:
 
     @ControllerMethod(url = '/all',
         roleRequired=[SecurityContext.ADMIN, SecurityContext.RESOURCE_ADMIN, SecurityContext.USER, SecurityContext.RESOURCE_USER],
         requestClass=[[AuthorizationAccessDto.AuthorizationAccessAllRequestDto]],
-        responseClass=[[AuthorizationAccessDto.AuthorizationAccessAllRequestDto]]
+        responseClass=[[AuthorizationAccessDto.AuthorizationAccessAllResponseDto]]
     )
     def post(self, dtoList):
-        self.service.resource.shareAllPurchase(dtoList)
+        self.service.resource.transferAllCreditCard(dtoList)
         return [], HttpStatus.CREATED
 
     @ControllerMethod(url = '/all',
@@ -27,5 +27,5 @@ class PurchaseResourceShareController:
         responseClass=[[AuthorizationAccessDto.AuthorizationAccessAllResponseDto]]
     )
     def delete(self, dtoList):
-        self.service.resource.revokeAllPurchase(dtoList)
+        # self.service.resource.revokeAllCreditCard(dtoList)
         return [], HttpStatus.ACCEPTED

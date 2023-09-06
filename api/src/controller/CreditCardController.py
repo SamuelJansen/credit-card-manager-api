@@ -24,8 +24,8 @@ class CreditCardController:
     url = '/credit-card',
     tag = 'Credit Card',
     description = 'Credit Card controller'
-    # , logRequest = True
-    # , logResponse = True
+    , logRequest = True
+    , logResponse = True
 )
 class CreditCardAllController:
 
@@ -45,3 +45,12 @@ class CreditCardAllController:
     )
     def post(self, dtoList):
         return self.service.creditCard.createAll(dtoList), HttpStatus.CREATED
+
+
+    @ControllerMethod(url = '/all',
+        roleRequired=[SecurityContext.ADMIN, SecurityContext.CREDIT_CARD_ADMIN, SecurityContext.USER, SecurityContext.CREDIT_CARD_USER],
+        requestClass=[[CreditCardDto.CreditCardRequestDto]],
+        responseClass=[[CreditCardDto.CreditCardResponseDto]]
+    )
+    def delete(self, dtoList):
+        return self.service.creditCard.revertAll(dtoList), HttpStatus.CREATED

@@ -1,7 +1,7 @@
 from python_framework import Controller, ControllerMethod, HttpStatus
 
 from domain.SecurityContext import SecurityContext
-from dto import AuthorizationAccessShareDto
+from dto import AuthorizationAccessDto
 
 @Controller(
     url = '/resource/share',
@@ -14,7 +14,7 @@ class ResourceShareController:
 
     @ControllerMethod(url = '/all',
         roleRequired=[SecurityContext.ADMIN, SecurityContext.RESOURCE_ADMIN, SecurityContext.USER, SecurityContext.RESOURCE_USER],
-        requestClass=[[AuthorizationAccessShareDto.AuthorizationAccessShareRequestDto]],
+        requestClass=[[AuthorizationAccessDto.AuthorizationAccessRequestDto]],
         responseClass=[]
     )
     def post(self, dtoList):
@@ -22,8 +22,9 @@ class ResourceShareController:
 
     @ControllerMethod(url = '/all',
         roleRequired=[SecurityContext.ADMIN, SecurityContext.RESOURCE_ADMIN, SecurityContext.USER, SecurityContext.RESOURCE_USER],
-        requestClass=[[AuthorizationAccessShareDto.AuthorizationAccessShareRequestDto]],
+        requestClass=[[AuthorizationAccessDto.AuthorizationAccessRequestDto]],
         responseClass=[]
     )
     def delete(self, dtoList):
-        return self.service.security.revokeAll(dtoList), HttpStatus.ACCEPTED
+        self.service.security.revokeAll(dtoList)
+        return None, HttpStatus.ACCEPTED

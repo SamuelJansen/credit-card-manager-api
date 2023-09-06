@@ -29,3 +29,16 @@ class PurchaseConverter:
         dto.creditCard = creditCardResponseDto
         dto.installmentList = installmentResponseDtoList
         return dto
+
+
+    @ConverterMethod(requestClass=[PurchaseDto.PurchaseResponseDto], responseClass=[PurchaseDto.PurchaseRequestDto])
+    def fromResponseDtoToRequestDto(self, dto, responseDto):
+        return responseDto
+
+
+    @ConverterMethod(requestClass=[[PurchaseDto.PurchaseResponseDto]])
+    def fromResponseDtoListToRequestDtoList(self, dtoList):
+        return [
+            self.fromResponseDtoToRequestDto(dto)
+            for dto in dtoList
+        ]

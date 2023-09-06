@@ -1,4 +1,4 @@
-class AuthorizationAccessShareRequestDto:
+class AuthorizationAccessRequestDto:
     def __init__(self,
         resourceKey = None,
         domain = None,
@@ -11,7 +11,7 @@ class AuthorizationAccessShareRequestDto:
         self.accountKey = accountKey
 
 
-class AuthorizationAccessShareResponseDto:
+class AuthorizationAccessResponseDto:
     def __init__(self,
         resourceKey = None,
         domain = None,
@@ -24,7 +24,7 @@ class AuthorizationAccessShareResponseDto:
         self.accountKey = accountKey
 
 
-class AuthorizationAccessShareAllRequestDto:
+class AuthorizationAccessAllRequestDto:
     def __init__(self,
         resourceKeyList = None,
         domain = None,
@@ -37,7 +37,7 @@ class AuthorizationAccessShareAllRequestDto:
         self.accountKey = accountKey
 
 
-class AuthorizationAccessShareAllResponseDto:
+class AuthorizationAccessAllResponseDto:
     def __init__(self,
         resourceKeyList = None,
         domain = None,

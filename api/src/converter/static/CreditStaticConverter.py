@@ -2,6 +2,7 @@ from python_helper import DateTimeHelper, ObjectHelper, ReflectionHelper
 from python_framework import StaticConverter
 
 from constant import CreditConstant
+from converter.static import DefaultStaticConverter
 
 
 def overrideDefaultValues(instance, objectKeys=None):
@@ -13,10 +14,18 @@ def overrideDefaultValues(instance, objectKeys=None):
 
 
 def overrideDefaultQueryValues(instance, objectKeys=None):
-    if ObjectHelper.isNone(instance):
-        return instance
-    objectKeys = StaticConverter.getValueOrDefault(objectKeys, ReflectionHelper.getAttributeNameListFromInstance(instance))
-    # overrideDefaultValues(instance, objectKeys=objectKeys)
-    if 'keyList' in objectKeys:
-        instance.keyList = StaticConverter.getValueOrDefault(instance.keyList, [])
-    return instance
+    return DefaultStaticConverter.overrideDefaultQueryValues(instance, objectKeys=objectKeys)
+    # if ObjectHelper.isNone(instance):
+    #     return instance
+    # instanceKeys = StaticConverter.getValueOrDefault(objectKeys, ReflectionHelper.getAttributeNameListFromInstance(instance))
+    # # overrideDefaultValues(instance, objectKeys=instanceKeys)
+    # # if 'keyList' in instanceKeys:
+    # #     instance.keyList = StaticConverter.getValueOrDefault(instance.keyList, [])
+    # if ObjectHelper.isNotEmpty(instanceKeys):
+    #     for objectKey in [
+    #         objectKey
+    #         for objectKey in instanceKeys
+    #         if objectKey.endswith('List')
+    #     ]:
+    #         ReflectionHelper.setAttributeOrMethod(instance, objectKey, StaticConverter.getValueOrDefault(ReflectionHelper.getAttributeOrMethod(instance, objectKey), []))
+    # return instance

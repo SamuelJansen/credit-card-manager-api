@@ -6,7 +6,7 @@ from python_framework import Service, ServiceMethod, AuditoryUtil, Serializer, E
 from domain import AuthorizationAccount, AuthorizationAccess, AuthorizationOperation
 from domain.SecurityContext import SecurityContext
 from config import SimpleAccountsConfig
-from dto import AuthorizationAccessShareDto
+from dto import AuthorizationAccessDto
 
 
 def buildAccessMemoryKey(resourceKey, accountKey):
@@ -50,14 +50,14 @@ class SecurityService:
         ]
 
 
-    @ServiceMethod(requestClass=[[AuthorizationAccessShareDto.AuthorizationAccessShareRequestDto]])
+    @ServiceMethod(requestClass=[[AuthorizationAccessDto.AuthorizationAccessRequestDto]])
     def shareAll(self, dtoList):
         authorizationAccount = self.getAuthorizationAccount()
         for dto in dtoList:
             self.shareResource(dto.resourceKey, dto.domain, dto.operation, dto.accountKey, authorizationAccount)
 
 
-    @ServiceMethod(requestClass=[[AuthorizationAccessShareDto.AuthorizationAccessShareRequestDto]])
+    @ServiceMethod(requestClass=[[AuthorizationAccessDto.AuthorizationAccessRequestDto]])
     def revokeAll(self, dtoList):
         authorizationAccount = self.getAuthorizationAccount()
         for dto in dtoList:

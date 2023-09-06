@@ -1,4 +1,4 @@
-from python_helper import ObjectHelper, log
+from python_helper import ObjectHelper, log, StringHelper
 from python_framework import Service, ServiceMethod, Serializer, GlobalException, HttpStatus
 
 from annotation.AuthorizedServiceAnnotation import AuthorizedServiceMethod
@@ -6,7 +6,7 @@ from annotation.AuthorizedServiceAnnotation import AuthorizedServiceMethod
 from domain import AuthorizationOperation
 from enumeration.InstallmentStatus import InstallmentStatus
 from constant import InstallmentConstant
-from dto import CreditCardDto, InstallmentDto
+from dto import CreditCardDto, InstallmentDto, CreditDto, PurchaseDto
 from model import CreditCard
 
 
@@ -16,16 +16,45 @@ class CreditCardService:
     @AuthorizedServiceMethod(requestClass=[[CreditCardDto.CreditCardRequestDto]], operations=[AuthorizationOperation.POST])
     def createAll(self, dtoList, authorizedRequest):
         self.validator.creditCard.validateCreateAll(dtoList, authorizedRequest.resourceKeys)
-        modelList = self.mapper.creditCard.fromRequestDtoListToModelList(dtoList)
-        creditResponseDtoList = self.service.credit.findAllForCreditCardCreation(
-            list(set([
+        newCreditResponseDtoList = []
+        for dto in [
+            dto 
+            for dto in dtoList 
+            if ObjectHelper.isNoneOrBlank(dto.creditKey)
+        ]:
+            newCreditResponseDto = self.service.credit.createAll([
+                CreditDto.CreditRequestDto(
+                    limit = dto.customLimit,
+                    customLimit = dto.customLimit,
+                    value = 0
+                )
+            ])[0]
+            dto.creditKey = newCreditResponseDto.key
+            newCreditResponseDtoList.append(newCreditResponseDto)
+        existingCreditResponseDtoList = self.service.credit.findAllForCreditCardCreation(list(set([
                 dto.creditKey
-                for dto in dtoList
-                if ObjectHelper.isNotNone(dto.creditKey)
-            ]))
-        )
+                for dto in dtoList 
+                if ObjectHelper.isNeitherNoneNorBlank(dto.creditKey)
+            ]))) 
+        modelList = self.mapper.creditCard.fromRequestDtoListToModelList(dtoList)
         self.saveAllModel(modelList)
-        return self.mapper.creditCard.toResponseDtoList(modelList, creditResponseDtoList)
+        return self.mapper.creditCard.toResponseDtoList(modelList, [*newCreditResponseDtoList, *existingCreditResponseDtoList])
+    
+
+    @AuthorizedServiceMethod(requestClass=[[CreditCardDto.CreditCardRequestDto]], operations=[AuthorizationOperation.DELETE])
+    def revertAll(self, dtoList, authorizedRequest):
+        purchaseResponseDtoList = self.service.purchase.findAllByQuery(
+            PurchaseDto.PurchaseQueryAllDto(
+                creditCardKeyList=[dto.key for dto in dtoList]
+            )
+        )
+        if ObjectHelper.isNotEmpty(purchaseResponseDtoList):
+            self.service.purchase.revertAll(
+                self.converter.purchase.fromResponseDtoListToRequestDtoList(purchaseResponseDtoList)
+            )
+        self.deleteAllByKeyIn([dto.key for dto in dtoList])
+        return []
+
 
 
     @AuthorizedServiceMethod(requestClass=[str, [InstallmentDto.InstallmentResponseDto]], operations=[AuthorizationOperation.PATCH])
@@ -92,7 +121,7 @@ class CreditCardService:
     @ServiceMethod(requestClass=[CreditCardDto.CreditCardQueryAllDto])
     def findAllByQuery(self, queryDto):
         modelList = self.findAllModelByQuery(queryDto)
-        creditResponseDtoList = self.service.credit.findAllForCreditCardCreation(
+        creditResponseDtoList = self.service.credit.findAllByKeyIn(
             list(set([
                 model.creditKey
                 for model in modelList

@@ -3,6 +3,7 @@ from python_framework import StaticConverter
 
 from constant import InstallmentConstant
 from enumeration.InstallmentStatus import InstallmentStatus
+from converter.static import DefaultStaticConverter
 
 
 def overrideDefaultValues(instance, objectKeys=None):
@@ -16,11 +17,19 @@ def overrideDefaultValues(instance, objectKeys=None):
 
 
 def overrideDefaultQueryValues(instance, objectKeys=None):
-    if ObjectHelper.isNone(instance):
-        return instance
-    instanceKeys = StaticConverter.getValueOrDefault(objectKeys, ReflectionHelper.getAttributeNameListFromInstance(instance))
-    if 'keyList' in instanceKeys:
-        instance.keyList = StaticConverter.getValueOrDefault(instance.keyList, [])
-    if 'statusList' in instanceKeys:
-        instance.statusList = StaticConverter.getValueOrDefault(instance.statusList, [])
-    return instance
+    return DefaultStaticConverter.overrideDefaultQueryValues(instance, objectKeys=objectKeys)
+    # if ObjectHelper.isNone(instance):
+    #     return instance
+    # instanceKeys = StaticConverter.getValueOrDefault(objectKeys, ReflectionHelper.getAttributeNameListFromInstance(instance))
+    # # if 'keyList' in instanceKeys:
+    # #     instance.keyList = StaticConverter.getValueOrDefault(instance.keyList, [])
+    # # if 'statusList' in instanceKeys:
+    # #     instance.statusList = StaticConverter.getValueOrDefault(instance.statusList, [])
+    # if ObjectHelper.isNotEmpty(instanceKeys):
+    #     for objectKey in [
+    #         objectKey
+    #         for objectKey in objectKeys
+    #         if objectKey.endswith('List')
+    #     ]:
+    #         ReflectionHelper.setAttributeOrMethod(instance, objectKey, StaticConverter.getValueOrDefault(ReflectionHelper.getAttributeOrMethod(instance, objectKey), []))
+    # return instance
