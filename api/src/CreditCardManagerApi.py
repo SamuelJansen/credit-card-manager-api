@@ -11,10 +11,27 @@ from flask import make_response, request, send_file
 
 from python_helper import ObjectHelper, log, DateTimeHelper
 from python_helper import Constant as c
-from python_framework import Serializer, OpenApiManager
+from python_framework import Serializer, OpenApiManager, StaticConverter
 
 from config import SimpleAccountsConfig
 from dto import CreditCardDto, InvoiceDto
+
+
+def getApiUrl(apiInstance):
+    globalsInstance = apiInstance.globals
+    sheme = StaticConverter.getValueOrDefault(StaticConverter.getValueOrDefault(globalsInstance.getSetting(f'{OpenApiManager.KW_OPEN_API}.{OpenApiManager.KW_SCHEMES}'), [apiInstance.scheme]), [apiInstance.scheme])[0]
+    host = StaticConverter.getValueOrDefault(globalsInstance.getSetting(f'{OpenApiManager.KW_OPEN_API}.{OpenApiManager.KW_HOST}'), apiInstance.host).replace(OpenApiManager.ZERO_DOT_ZERO_DOT_ZERO_DOT_ZERO_HOST, OpenApiManager.LOCALHOST_HOST)
+    colonPortIfAny = StaticConverter.getValueOrDefault(f"{c.COLON}{globalsInstance.getSetting(f'{OpenApiManager.KW_OPEN_API}.{OpenApiManager.KW_PORT}')}", c.BLANK).replace(f'{c.COLON}None', c.BLANK)
+    exposedHostApiUrl = f'{sheme}{OpenApiManager.SCHEME_HOST_SEPARATOR}{host}{colonPortIfAny}{apiInstance.baseUrl}'
+    return f'{exposedHostApiUrl}'.replace(OpenApiManager.PORT_80_IN_URL, OpenApiManager.PORT_80_EXCLUDED_FROM_URL).replace(OpenApiManager.ZERO_DOT_ZERO_DOT_ZERO_DOT_ZERO_HOST, OpenApiManager.LOCALHOST_HOST)
+
+
+OpenApiManager.getApiUrl = getApiUrl
+
+
+API_URL = OpenApiManager.getApiUrl(app.api)
+log.debugIt(API_URL)
+
 
 
 @app.route(f'{app.api.baseUrl}/credit-card/download', methods=['GET'])
@@ -64,7 +81,7 @@ def getInvoicesByAuthorization(authentication, date) -> [InvoiceDto.InvoiceRespo
     try:
         return Serializer.convertFromJsonToObject(
             requests.get(
-                f'{OpenApiManager.getApiUrl(app.api)}/invoice/all?date={date}',
+                f'{API_URL}/invoice/all?date={date}',
                 headers={
                     'Authorization': f'Bearer {authentication}'
                 }
