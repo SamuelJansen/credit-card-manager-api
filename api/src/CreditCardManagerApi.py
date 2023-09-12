@@ -51,7 +51,10 @@ def getCreditCards() -> [CreditCardDto.CreditCardResponseDto]:
 def toCreditCardsCsvContent(creditCardResponseDtoList):
     print(creditCardResponseDtoList)
     return toCsv([
-        [f'{creditCardResponseDto.label}', f'{creditCardResponseDto.value}']
+        [
+            f'{creditCardResponseDto.label}', 
+            toValue(creditCardResponseDto.value)
+        ]
         for creditCardResponseDto in creditCardResponseDtoList
     ])
 
@@ -95,7 +98,10 @@ def getInvoicesByAuthorization(authentication, date) -> [InvoiceDto.InvoiceRespo
 
 def toInvoicesCsvContent(invoiceResponseDtoList: [InvoiceDto.InvoiceResponseDto]):
     return toCsv([
-        [f'{invoiceResponseDto.creditCard.label}', f'{invoiceResponseDto.value}']
+        [
+            f'{invoiceResponseDto.creditCard.label}', 
+            toValue(invoiceResponseDto.value)
+        ]
         for invoiceResponseDto in invoiceResponseDtoList
     ])
 
@@ -123,7 +129,13 @@ def downloadUserDetailedInvoices(date, userKey):
 def toInvoicesCsvContentDictionary(date, userKey):
     return {
         invoiceResponseDto.creditCard.label: toCsv([
-            [toUserFriendlyDate(installmentResponseDto.installmentAt), f'{installmentResponseDto.label}', f'{invoiceResponseDto.creditCard.label}', toUserValueDate(installmentResponseDto.value), toUserFriendlyInstalmmentOrder(installmentResponseDto)]
+            [
+                toUserFriendlyDate(installmentResponseDto.installmentAt), 
+                f'{installmentResponseDto.label}', 
+                f'{invoiceResponseDto.creditCard.label}', 
+                toUserrFriendlyValueDate(installmentResponseDto.value), 
+                toUserFriendlyInstalmmentOrder(installmentResponseDto)
+            ]
             for installmentResponseDto in invoiceResponseDto.installmentList
         ])
         for invoiceResponseDto in getInvoices(
@@ -158,8 +170,12 @@ def toUserFriendlyDate(date):
     return f'''{userFriendlyDate[-1]}/{userFriendlyDate[1]}/{userFriendlyDate[0]} {userFriendlyDateTimeSplited[-1] if 2 == len(userFriendlyDateTimeSplited) else '10:10:10.000'}'''
 
 
-def toUserValueDate(value):
-    return f'R$ {-1 * float(value)}'.replace(c.COMA, c.BLANK).replace(c.DOT, c.COMA)
+def toValue(value):
+    return float(value) if ObjectHelper.equals(0.0, value) else f'{-1 * float(value)}'
+
+
+def toUserrFriendlyValueDate(value):
+    return f'R$ {toValue(value)}'.replace(c.COMA, c.BLANK).replace(c.DOT, c.COMA)
 
 
 def toUserFriendlyInstalmmentOrder(installmentResponseDto: InstallmentDto.InstallmentResponseDto):
