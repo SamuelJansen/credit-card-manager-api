@@ -14,7 +14,7 @@ from python_helper import Constant as c
 from python_framework import Serializer, OpenApiManager, StaticConverter
 
 from config import SimpleAccountsConfig
-from dto import CreditCardDto, InvoiceDto
+from dto import CreditCardDto, InvoiceDto, InstallmentDto
 
 
 def getApiUrl(apiInstance):
@@ -123,7 +123,7 @@ def downloadUserDetailedInvoices(date, userKey):
 def toInvoicesCsvContentDictionary(date, userKey):
     return {
         invoiceResponseDto.creditCard.label: toCsv([
-            [f'{installmentResponseDto.installmentAt}', f'{installmentResponseDto.label}', f'{installmentResponseDto.value}']
+            [toUserFriendlyDate(installmentResponseDto.installmentAt), f'{installmentResponseDto.label}', f'{invoiceResponseDto.creditCard.label}', toUserValueDate(installmentResponseDto.value), toUserFriendlyInstalmmentOrder(installmentResponseDto)]
             for installmentResponseDto in invoiceResponseDto.installmentList
         ])
         for invoiceResponseDto in getInvoices(
@@ -147,6 +147,21 @@ def toCsv(contentRows):
     csv.writer(osBuffer, delimiter=c.SEMI_COLON).writerows(contentRows)
     return osBuffer.getvalue()
 
+
 def parseFileName(originalFileName):
     return originalFileName.replace(c.SPACE, c.BLANK)
+
+
+def toUserFriendlyDate(date):
+    userFriendlyDateTimeSplited = f'{date}'.split()
+    userFriendlyDate = userFriendlyDateTimeSplited[0].split(c.DASH)
+    return f'''{userFriendlyDate[-1]}/{userFriendlyDate[1]}/{userFriendlyDate[0]} {userFriendlyDateTimeSplited[-1] if 2 == len(userFriendlyDateTimeSplited) else '10:10:10.000'}'''
+
+
+def toUserValueDate(value):
+    return f'R$ {-1 * float(value)}'.replace(c.COMA, c.BLANK).replace(c.DOT, c.COMA)
+
+
+def toUserFriendlyInstalmmentOrder(installmentResponseDto: InstallmentDto.InstallmentResponseDto):
+    return c.DASH if ObjectHelper.equals(1, installmentResponseDto.installments) else f'{installmentResponseDto.order} de {int(installmentResponseDto.installments)}'
 
