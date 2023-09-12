@@ -1,4 +1,4 @@
-from python_framework import ResourceManager, Serializer
+from python_framework import ResourceManager
 
 from model import ModelAssociation
 
@@ -6,23 +6,130 @@ from model import ModelAssociation
 app = ResourceManager.initialize(__name__, ModelAssociation.MODEL, managerList=[])
 
 
-import io
-import csv
-from flask import make_response
-from dto import CreditCardDto
+import io, csv, requests, zipfile
+from flask import make_response, request, send_file
+
+from python_helper import ObjectHelper, log, DateTimeHelper
+from python_helper import Constant as c
+from python_framework import Serializer, OpenApiManager
+
+from config import SimpleAccountsConfig
+from dto import CreditCardDto, InvoiceDto
 
 
-@app.route(f'{app.api.baseUrl}/download', methods=['GET'])
-def get():
-    si = io.StringIO()
-    cw = csv.writer(si)
-    cw.writerows([
-        [f'{creditCard.label}', f'{creditCard.value}']
-        for creditCard in app.api.resource.repository.creditCard.findAllByQuery(
-            Serializer.getObjectAsDictionary(CreditCardDto.CreditCardQueryDto())
+@app.route(f'{app.api.baseUrl}/credit-card/download', methods=['GET'])
+def downloadCreditCards():
+    output = make_response(toCreditCardsCsvContent(getCreditCards()))
+    output.headers['Content-Disposition'] = f'''attachment; filename={parseFileName('credit-card.csv')}'''
+    output.headers['Content-type'] = 'text/csv'
+    return output
+
+
+def getCreditCards() -> [CreditCardDto.CreditCardResponseDto]:
+    return app.api.resource.repository.creditCard.findAllByQuery(
+        Serializer.getObjectAsDictionary(CreditCardDto.CreditCardQueryDto())
+    )
+
+
+def toCreditCardsCsvContent(creditCardResponseDtoList):
+    print(creditCardResponseDtoList)
+    return toCsv([
+        [f'{creditCardResponseDto.label}', f'{creditCardResponseDto.value}']
+        for creditCardResponseDto in creditCardResponseDtoList
+    ])
+
+
+@app.route(f'{app.api.baseUrl}/invoice/download/<string:date>', methods=['GET'])
+def downloadInvoices(date):
+    output = make_response(toInvoicesCsvContent(getInvoices(
+        DateTimeHelper.of(date=DateTimeHelper.dateOf(DateTimeHelper.of(date=date)))
+    )))
+    output.headers['Content-Disposition'] = f'''attachment; filename={parseFileName(f'{date}-invoices.csv')}'''
+    output.headers['Content-type'] = 'text/csv'
+    return output
+
+
+def getInvoices(date, userKey=None) -> [InvoiceDto.InvoiceResponseDto]:
+    return ObjectHelper.flatMap([
+        getInvoicesByAuthorization(authenticatedUser.authentication, date)
+        for authenticatedUser in SimpleAccountsConfig.AUTHENTICATED_USERS
+        if (
+            ObjectHelper.isEmpty(userKey) or
+            ObjectHelper.equals(authenticatedUser.userKey, userKey)
         )
     ])
-    output = make_response(si.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename=export.csv"
-    output.headers["Content-type"] = "text/csv"
+
+
+def getInvoicesByAuthorization(authentication, date) -> [InvoiceDto.InvoiceResponseDto]:
+    try:
+        return Serializer.convertFromJsonToObject(
+            requests.get(
+                f'{OpenApiManager.getApiUrl(app.api)}/invoice/all?date={date}',
+                headers={
+                    'Authorization': f'Bearer {authentication}'
+                }
+            ).json(),
+            [[InvoiceDto.InvoiceResponseDto]]
+        )
+    except Exception as exception:
+        log.error(getInvoicesByAuthorization, 'Error', exception=exception)
+        return []
+
+
+def toInvoicesCsvContent(invoiceResponseDtoList: [InvoiceDto.InvoiceResponseDto]):
+    return toCsv([
+        [f'{invoiceResponseDto.creditCard.label}', f'{invoiceResponseDto.value}']
+        for invoiceResponseDto in invoiceResponseDtoList
+    ])
+
+
+@app.route(f'{app.api.baseUrl}/invoice/user/download/<string:date>/<string:userKey>', methods=['GET'])
+def downloadUserInvoices(date, userKey):
+    output = make_response(toInvoicesCsvContent(getInvoices(
+        DateTimeHelper.of(date=DateTimeHelper.dateOf(DateTimeHelper.of(date=date))),
+        userKey = userKey
+    )))
+    output.headers['Content-Disposition'] = f'''attachment; filename={parseFileName(f'{userKey}-{date}-invoices.csv')}'''
+    output.headers['Content-type'] = 'text/csv'
     return output
+
+
+@app.route(f'{app.api.baseUrl}/invoice/user/detailed/download/<string:date>/<string:userKey>', methods=['GET'])
+def downloadUserDetailedInvoices(date, userKey):
+    return send_file(
+        toUserDetailedInvoicesZipContentStream(date, userKey),
+        as_attachment = True,
+        download_name = parseFileName(f'{userKey}-{date}-detailed-invoices.zip')
+    )
+
+
+def toInvoicesCsvContentDictionary(date, userKey):
+    return {
+        invoiceResponseDto.creditCard.label: toCsv([
+            [f'{installmentResponseDto.installmentAt}', f'{installmentResponseDto.label}', f'{installmentResponseDto.value}']
+            for installmentResponseDto in invoiceResponseDto.installmentList
+        ])
+        for invoiceResponseDto in getInvoices(
+            DateTimeHelper.of(date=DateTimeHelper.dateOf(DateTimeHelper.of(date=date))),
+            userKey = userKey
+        )
+    }
+
+
+def toUserDetailedInvoicesZipContentStream(date, userKey):
+    stream = io.BytesIO()
+    with zipfile.ZipFile(stream, 'w') as zf:
+        for creditCardLabel, content in toInvoicesCsvContentDictionary(date, userKey).items():
+            zf.writestr(parseFileName(f'{userKey}-{creditCardLabel}-{date}-invoices.csv'), content)
+    stream.seek(0)
+    return stream
+
+
+def toCsv(contentRows):
+    osBuffer = io.StringIO()
+    csv.writer(osBuffer, delimiter=c.SEMI_COLON).writerows(contentRows)
+    return osBuffer.getvalue()
+
+def parseFileName(originalFileName):
+    return originalFileName.replace(c.SPACE, c.BLANK)
+

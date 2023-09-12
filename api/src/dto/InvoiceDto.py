@@ -1,4 +1,4 @@
-# from converter.static import InvoiceStaticConverter
+from converter.static import DefaultStaticConverter
 from python_helper import DateTimeHelper, ObjectHelper
 
 class InvoiceRequestDto:
@@ -6,7 +6,7 @@ class InvoiceRequestDto:
         key = None
     ):
         self.key = key
-        # InvoiceStaticConverter.overrideDefaultValues(self)
+        DefaultStaticConverter.overrideDefaultValues(self)
 
 
 class InvoiceResponseDto:
@@ -24,7 +24,7 @@ class InvoiceResponseDto:
         self.creditCard = creditCard
         self.closeAt = DateTimeHelper.dateNow() if ObjectHelper.isNone(closeAt) else DateTimeHelper.dateOf(dateTime=DateTimeHelper.of(date=closeAt))
         self.dueAt = DateTimeHelper.dateNow() if ObjectHelper.isNone(dueAt) else DateTimeHelper.dateOf(dateTime=DateTimeHelper.of(date=dueAt))
-        # InvoiceStaticConverter.overrideDefaultValues(self)
+        DefaultStaticConverter.overrideDefaultValues(self)
 
 
 class InvoiceQueryDto:
@@ -36,4 +36,4 @@ class InvoiceQueryDto:
         self.keyList = keyList
         self.creditCardKeyList = creditCardKeyList
         self.date = DateTimeHelper.dateNow() if ObjectHelper.isNone(date) else DateTimeHelper.dateOf(dateTime=DateTimeHelper.of(date=date))
-        # InvoiceStaticConverter.overrideDefaultQueryValues(self)
+        DefaultStaticConverter.overrideDefaultQueryValues(self)

@@ -30,9 +30,18 @@ api:
         mute-logs: False
 
 simple-accounts:
-    admin-zero: ${ADMIN_0_ACCOUNT_KEY}
-    user-zero: ${USER_0_ACCOUNT_KEY}
-    user-one: ${USER_1_ACCOUNT_KEY}
+    admin-zero: 
+        user: ${ADMIN_0_ACCOUNT_KEY:default}
+        authorization: ${ADMIN_0_AUTHORIZATION:default}
+    admin-one: 
+        user: ${ADMIN_1_ACCOUNT_KEY:default}
+        authorization: ${ADMIN_1_AUTHORIZATION:default}
+    user-zero:  
+        user: ${USER_0_ACCOUNT_KEY:default}
+        authorization: ${USER_0_AUTHORIZATION:default}
+    user-one:  
+        user: ${USER_1_ACCOUNT_KEY:default}
+        authorization: ${USER_1_AUTHORIZATION:default}
 
 swagger:
     # schemes: [${api.server.scheme}]
