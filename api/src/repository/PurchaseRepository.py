@@ -32,15 +32,10 @@ class PurchaseRepository:
     def deleteByKey(self, key):
         self.repository.deleteByKeyAndCommit(key, self.model)
 
-    # def deleteAllByKeyIn(self, keyList):
-    #     if ObjectHelper.isEmpty(keyList):
-    #         return []
-    #     self.repository.deleteAllByKeyInAndCommit(keyList, self.model)
-
     def deleteAllByKeyIn(self, keyList):
         if ObjectHelper.isEmpty(keyList):
             return []
-        self.repository.deleteAllByKeyInAndCommit(self.model, keyList)
+        self.repository.deleteAllByKeyInAndCommit(keyList, self.model)
 
     def findById(self, id):
         return self.repository.findByIdAndCommit(id, self.model)

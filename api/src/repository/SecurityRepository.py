@@ -7,6 +7,8 @@ from domain import AuthorizationAccess
 
 class FileManager:
 
+    writting = False
+
     def __init__(self):
         self.fileName = 'security.json'
         self.fileUri = 'security'
@@ -16,16 +18,29 @@ class FileManager:
         self.filePath = EnvironmentHelper.OS.path.join(self.uri, self.fileName)
 
 
+    def isWritting(self):
+        return True and self.writting
+
+
+    def switchIsWritting(self):
+        self.writting = not self.isWritting()
+
+
     def writeContent(self, content):
+        self.switchIsWritting()
         try:
             FileHelper.writeContent(self.filePath, content, operation=FileOperation.OVERRIDE_TEXT)
+            self.switchIsWritting()
             return content
         except Exception as exception:
+            self.switchIsWritting()
             log.failure(self.writeContent, f'Not possible to write content. Filepath: {self.filePath}, content: {content}, operation: {FileOperation.OVERRIDE_TEXT}', exception=exception)
             raise exception
 
 
     def readContent(self):
+        while self.isWritting():
+            pass
         try:
             return StringHelper.join(
                 StringHelper.join(
