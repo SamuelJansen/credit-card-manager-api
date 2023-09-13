@@ -78,26 +78,28 @@ class PurchaseService:
 
     @AuthorizedServiceMethod(requestClass=[[PurchaseDto.PurchaseRequestDto]], operations=[AuthorizationOperation.DELETE])
     def revertAll(self, dtoList, authorizedRequest):
-        log.status(self.revertAll, f'Finding {len(dtoList)} purchases')
-        responseDtoList = ObjectHelper.sortIt(
-            self.findAllByQuery(PurchaseDto.PurchaseQueryAllDto(keyList=[
-                dto.key
-                for dto in ObjectHelper.sortIt(dtoList, byAttribute=PurchaseConstant.SORTTING_ATTRIBUTE)
-            ])),
-            byAttribute=PurchaseConstant.SORTTING_ATTRIBUTE
-        )
-        log.status(self.revertAll, f'{len(responseDtoList)} purchases found')
-        log.status(self.revertAll, f'Reverting {len(responseDtoList)} purchases')
-        self.service.installment.revertAll(
-            InstallmentDto.InstallmentQueryAllDto(
-                keyList = [
-                    installmentResponseDto.key
-                    for responseDto in responseDtoList
-                    for installmentResponseDto in ObjectHelper.sortIt(responseDto.installmentList, byAttribute=InstallmentConstant.SORTTING_ATTRIBUTE)
-                ]
+        if ObjectHelper.isNotEmpty(dtoList):
+            log.status(self.revertAll, f'Finding {len(dtoList)} purchases')
+            responseDtoList = ObjectHelper.sortIt(
+                self.findAllByQuery(PurchaseDto.PurchaseQueryAllDto(keyList=[
+                    dto.key
+                    for dto in ObjectHelper.sortIt(dtoList, byAttribute=PurchaseConstant.SORTTING_ATTRIBUTE)
+                ])),
+                byAttribute=PurchaseConstant.SORTTING_ATTRIBUTE
             )
-        )
-        log.status(self.revertAll, f'{len(responseDtoList)} purchases reverted')
+            log.status(self.revertAll, f'{len(responseDtoList)} purchases found')
+            log.status(self.revertAll, f'Reverting {len(responseDtoList)} purchases')
+            self.service.installment.revertAll(
+                InstallmentDto.InstallmentQueryAllDto(
+                    keyList = [
+                        installmentResponseDto.key
+                        for responseDto in responseDtoList
+                        for installmentResponseDto in ObjectHelper.sortIt(responseDto.installmentList, byAttribute=InstallmentConstant.SORTTING_ATTRIBUTE)
+                    ]
+                )
+            )
+            log.status(self.revertAll, f'{len(responseDtoList)} purchases reverted')
+            self.deleteAllByKeyIn([dto.key for dto in dtoList])
         return []
 
 

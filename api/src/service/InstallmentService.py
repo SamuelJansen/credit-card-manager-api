@@ -159,60 +159,62 @@ class InstallmentService:
     def revertAll(self, queryDto, authorizedRequest):
         log.status(self.revertAll, f'Reverting {len(queryDto.keyList)} installments')
         installmentResponseDtoList = self.findAllRevertableByQuery(queryDto)
-        self.updateAllStatusByKeyList(
-            [
-                installmentResponseDto.key
-                for installmentResponseDto in installmentResponseDtoList
-            ],
-            InstallmentStatus.REVERTING
-        )
-        creditCardResponseDtoList = self.service.creditCard.findAllByKeyIn(
-            list(set([
-                installmentResponseDto.purchase.creditCardKey
-                for installmentResponseDto in installmentResponseDtoList
-            ]))
-        )
-        responseDtoList = []
-        for creditCardResponseDto in creditCardResponseDtoList:
-            toRevertInstallmentKeyList = [
-                installmentResponseDto.key
-                for installmentResponseDto in installmentResponseDtoList
-                if creditCardResponseDto.key == installmentResponseDto.purchase.creditCardKey
-            ]
-            toRevertInstallmentDtoList = self.service.installment.findAllByKeyIn(toRevertInstallmentKeyList)
-            try:
-                creditCardInstallmentRevertedList = self.service.creditCard.revertAllInstalments(
-                    creditCardResponseDto.key,
-                    toRevertInstallmentDtoList
-                )
-                processingInstallmentKeyList = [
-                    creditCardInstallmentRevertedDto.key
-                    for creditCardInstallmentRevertedDto in creditCardInstallmentRevertedList
-                    if InstallmentStatus.REVERTING == creditCardInstallmentRevertedDto.status
+        log.status(self.revertAll, f'{len(installmentResponseDtoList)} installments found')
+        if ObjectHelper.isNotEmpty(installmentResponseDtoList):
+            self.updateAllStatusByKeyList(
+                [
+                    installmentResponseDto.key
+                    for installmentResponseDto in installmentResponseDtoList
+                ],
+                InstallmentStatus.REVERTING
+            )
+            creditCardResponseDtoList = self.service.creditCard.findAllByKeyIn(
+                list(set([
+                    installmentResponseDto.purchase.creditCardKey
+                    for installmentResponseDto in installmentResponseDtoList
+                ]))
+            )
+            responseDtoList = []
+            for creditCardResponseDto in creditCardResponseDtoList:
+                toRevertInstallmentKeyList = [
+                    installmentResponseDto.key
+                    for installmentResponseDto in installmentResponseDtoList
+                    if creditCardResponseDto.key == installmentResponseDto.purchase.creditCardKey
                 ]
-                if 0 < len(processingInstallmentKeyList):
-                    responseDtoList += self.updateAllStatusByKeyList(
-                        processingInstallmentKeyList,
-                        InstallmentStatus.REVERTED
+                toRevertInstallmentDtoList = self.service.installment.findAllByKeyIn(toRevertInstallmentKeyList)
+                try:
+                    creditCardInstallmentRevertedList = self.service.creditCard.revertAllInstalments(
+                        creditCardResponseDto.key,
+                        toRevertInstallmentDtoList
                     )
-                if len(toRevertInstallmentDtoList) > len(processingInstallmentKeyList):
+                    processingInstallmentKeyList = [
+                        creditCardInstallmentRevertedDto.key
+                        for creditCardInstallmentRevertedDto in creditCardInstallmentRevertedList
+                        if InstallmentStatus.REVERTING == creditCardInstallmentRevertedDto.status
+                    ]
+                    if 0 < len(processingInstallmentKeyList):
+                        responseDtoList += self.updateAllStatusByKeyList(
+                            processingInstallmentKeyList,
+                            InstallmentStatus.REVERTED
+                        )
+                    if len(toRevertInstallmentDtoList) > len(processingInstallmentKeyList):
+                        responseDtoList += self.updateAllStatusByKeyList(
+                            [
+                                creditCardInstallmentRevertedDto.key
+                                for creditCardInstallmentRevertedDto in creditCardInstallmentRevertedList
+                                if creditCardInstallmentRevertedDto.key in toRevertInstallmentKeyList and not InstallmentStatus.REVERTING == creditCardInstallmentRevertedDto.status
+                            ],
+                            InstallmentStatus.ERROR
+                        )
+                except Exception as exception:
+                    log.error(self.revertAll, f'Not possible to revert installments {queryDto.keyList}', exception=exception)
                     responseDtoList += self.updateAllStatusByKeyList(
                         [
-                            creditCardInstallmentRevertedDto.key
-                            for creditCardInstallmentRevertedDto in creditCardInstallmentRevertedList
-                            if creditCardInstallmentRevertedDto.key in toRevertInstallmentKeyList and not InstallmentStatus.REVERTING == creditCardInstallmentRevertedDto.status
+                            toRevertInstallmentDto.key
+                            for toRevertInstallmentDto in toRevertInstallmentDtoList
                         ],
                         InstallmentStatus.ERROR
                     )
-            except Exception as exception:
-                log.error(self.revertAll, f'Not possible to revert installments {queryDto.keyList}', exception=exception)
-                responseDtoList += self.updateAllStatusByKeyList(
-                    [
-                        toRevertInstallmentDto.key
-                        for toRevertInstallmentDto in toRevertInstallmentDtoList
-                    ],
-                    InstallmentStatus.ERROR
-                )
         log.status(self.revertAll, f'{len(responseDtoList)} installments reverted')
         return responseDtoList
 
