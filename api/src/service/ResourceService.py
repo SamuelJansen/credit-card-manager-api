@@ -8,7 +8,7 @@ from dto import AuthorizationAccessDto, CreditCardDto, PurchaseDto
 class ResourceService:
 
 
-    @ServiceMethod(requestClass=[[CreditCardDto.CreditCardResponseDto]])
+    @ServiceMethod(requestClass=[CreditCardDto.CreditCardResponseDto])
     def getPurchases(self, creditCardResponseDto):
         try:
             return self.service.purchase.findAllByQuery(
